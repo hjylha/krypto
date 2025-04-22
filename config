@@ -1,0 +1,7 @@
+default_language=fi
+[alphabet]
+fi=abcdefghijklmnopqrstuvwxyzåäö
+en=abcdefghijklmnopqrstuvwxyz
+[wordlist]
+fi=nykysuomensanalista2024.txt
+en=words_alpha.txt

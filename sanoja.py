@@ -3,9 +3,41 @@ import string
 import sys
 
 
+DEFAULT_LANGUAGE = "fi"
+
+
+def get_alphabet_and_wordlist_path(language_tag=None):
+    a = "alphabet"
+    p = "wordlist"
+    section = None
+    alphabet = None
+    # wordlist_path = None
+    with open("config", "r") as f:
+        for line in f:
+            if language_tag is None and "default_language" in line:
+                language_tag = line.strip().split("=")[1].strip()
+            if f"[{a}]" in line:
+                section = a
+                continue
+            if f"[{p}]" in line:
+                section = p
+                continue
+            if language_tag.lower() in line:
+                value = line.strip().split("=")[1].strip()
+                if section == a:
+                    alphabet = value
+                    continue
+                if section == p:
+                    wordlist_path = value
+                    continue
+    return alphabet, wordlist_path
+
+
 SUOMALAISET_AAKKOSET = "abcdefghijklmnopqrstuvwxyzåäö"
 
 def are_letters_in_alphabet(word, alphabet):
+    if alphabet is None:
+        return True
     alphabet = alphabet.lower()
     for char in word.lower():
         if char not in alphabet:
@@ -13,17 +45,31 @@ def are_letters_in_alphabet(word, alphabet):
     return True
 
 
-WORDLISTPATH = "nykysuomensanalista2024.csv"
+# WORDLISTPATH = "nykysuomensanalista2024.csv"
+WORDLISTPATH = "nykysuomensanalista2024.txt"
 
-FULL_WORDLIST = []
 
-with open(WORDLISTPATH, "r") as f:
-    for i, line in enumerate(f):
-        if i == 0:
-            continue
-        word = line.split("\t")[0].lower()
-        if word:
-            FULL_WORDLIST.append(word)
+def get_wordlist(wordlistpath):
+    wordlist = []
+    with open(wordlistpath, "r") as f:
+        for i, line in enumerate(f):
+            if i == 0:
+                continue
+            word = line.split("\t")[0].strip().lower()
+            if word:
+                wordlist.append(word)
+    return wordlist
+
+# FULL_WORDLIST = []
+
+# with open(WORDLISTPATH, "r") as f:
+#     for i, line in enumerate(f):
+#         if i == 0:
+#             continue
+#         word = line.split("\t")[0].lower()
+#         if word:
+#             FULL_WORDLIST.append(word)
+FULL_WORDLIST = get_wordlist(WORDLISTPATH)
 
 WORDLIST = [word for word in FULL_WORDLIST if are_letters_in_alphabet(word, SUOMALAISET_AAKKOSET)]
 
@@ -296,10 +342,10 @@ def try_to_match_words_to_numbers(crypto_numbers, wordlist, min_matches_wanted, 
     matched_crypto_words = matched_crypto_words0
     decoding_tuple = decoding_tuple0
     not_done = num_of_iterations
-    print("ERROR CHECK")
-    for cw, w in decrypt_crypto_words(matched_crypto_words, decoding_tuple):
-        print(w, "\t", cw)
-    print()
+    # print("ERROR CHECK")
+    # for cw, w in decrypt_crypto_words(matched_crypto_words, decoding_tuple):
+    #     print(w, "\t", cw)
+    # print()
     while not_done:
         counts = count_in_how_many_words_numbers_are(matched_crypto_words)
         decoding_tuple = tuple(pair for pair in decoding_tuple if counts[pair[0]] >= min_letter_matches_wanted)
@@ -392,6 +438,15 @@ def save_decoded_words_to_file(decoded_words, filepath="ratkaisu.csv"):
 if __name__ == "__main__":
     # print(sys.argv)
     try:
+        language_tag = sys.argv[2]
+    except IndexError:
+        language_tag = None
+
+    alphabet, wordlist_path = get_alphabet_and_wordlist_path(language_tag)
+    FULL_WORDLIST = get_wordlist(wordlist_path)
+    WORDLIST = [word for word in FULL_WORDLIST if are_letters_in_alphabet(word, alphabet)]
+
+    try:
         crypto_path = sys.argv[1]
         CRYPTO_WORDS = get_crypto_words(crypto_path)
     except IndexError:
@@ -417,7 +472,7 @@ if __name__ == "__main__":
     #     print(f"{w} \t {c_w}")
     print(f"{len(CRYPTO_WORDS)} encrypted words, {len(WORDLIST)} words to match...")
 
-    cw_solved, dt = try_to_match_words_to_numbers(CRYPTO_WORDS, WORDLIST, min_matches_wanted=10, min_letter_matches_wanted=2, num_of_iterations=5)
+    cw_solved, dt = try_to_match_words_to_numbers(CRYPTO_WORDS, WORDLIST, min_matches_wanted=len(CRYPTO_WORDS) // 8, min_letter_matches_wanted=3, num_of_iterations=10)
     
     print(f"{len(cw_solved)} out of {len(CRYPTO_WORDS)} words found:")
     for w in [word for _, word in decrypt_crypto_words(cw_solved, dt)]:
@@ -429,3 +484,6 @@ if __name__ == "__main__":
     print("key:")
     for num, char in dt:
         print(num, char)
+    
+    print()
+    pw(dt)
