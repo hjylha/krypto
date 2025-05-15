@@ -7,7 +7,8 @@ import krypto
 
 def test_read_config():
     config_path = Path(__file__).parent / "test_stuff" / "test_config.conf"
-    config_dict = krypto.read_config(config_path)
+    default_language, config_dict = krypto.read_config(config_path)
+    assert default_language == "tag"
     assert config_dict["tag"]["alphabet"] == "abcdefg"
     assert config_dict["tag"]["wordlist_path"] == Path("test_stuff") / "test_wordlist"
     assert config_dict["another_tag"]["alphabet"] == "abcdefghijklmnopqrstuvwxyzåäö"
@@ -128,6 +129,13 @@ def test_does_word_match(word, codeword, result):
 )
 def test_does_word_match_to_substitution_tuple(word, codeword, substitution_tuple, result):
     assert krypto.does_word_match_to_substitution_tuple(word, codeword, substitution_tuple) == result
+
+
+def test_get_matching_words():
+    codeword = (1, 2, 3, 3, 4)
+    wordlist = ["hello", "world", "english", "abccd"]
+    expected_answer = ["hello", "abccd"]
+    assert krypto.get_matching_words(codeword, wordlist) == expected_answer
 
 
 def test_match_word_to_matching_indices():
