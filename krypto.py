@@ -165,7 +165,7 @@ def get_matching_words(codeword, wordlist):
     return [word for word in wordlist if does_word_match(word, codeword)]
 
 
-def match_word_to_matching_indices(word, matching_indices_dict):
+def does_word_match_to_matching_indices(word, matching_indices_dict):
     for char, indices in matching_indices_dict.items():
         for i in indices:
             if char != word[i]:
@@ -227,7 +227,7 @@ class CodewordPuzzle:
             for i, char in enumerate(word1):
                 m_indices[char] = matching_indices[codeword1[i]]
             for word2 in self.matched_words[codeword2]:
-                if match_word_to_matching_indices(word2, m_indices):
+                if does_word_match_to_matching_indices(word2, m_indices):
                     matching_pairs.append((word1, word2))
         return matching_pairs
     

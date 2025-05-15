@@ -133,10 +133,30 @@ def test_does_word_match_to_substitution_tuple(word, codeword, substitution_tupl
 
 def test_get_matching_words():
     codeword = (1, 2, 3, 3, 4)
-    wordlist = ["hello", "world", "english", "abccd"]
+    wordlist = ["hello", "world", "tiny", "english", "abccd"]
     expected_answer = ["hello", "abccd"]
     assert krypto.get_matching_words(codeword, wordlist) == expected_answer
 
 
-def test_match_word_to_matching_indices():
-    pass
+def test_does_word_match_to_matching_indices():
+    word = "hello"
+    dict_works = {
+        "h": [0],
+        "e": [1],
+        "l": [2, 3],
+        "o": [4]
+    }
+    dict_doesnt_work = {
+        "a": [0],
+        "e": [1],
+        "h": [0],
+        "l": [2, 3],
+        "o": [4]
+    }
+    dict_doesnt_work_either = {
+        "a": [0],
+        "b": [1]
+    }
+    assert krypto.does_word_match_to_matching_indices(word, dict_works)
+    assert not krypto.does_word_match_to_matching_indices(word, dict_doesnt_work)
+    assert not krypto.does_word_match_to_matching_indices(word, dict_doesnt_work_either)
