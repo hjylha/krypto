@@ -161,8 +161,19 @@ def does_word_match_to_substitution_tuple(word, codeword, substitution_tuple):
     return True
 
 
-def get_matching_words(codeword, wordlist):
-    return [word for word in wordlist if does_word_match(word, codeword)]
+def get_matching_words(codeword, wordlist, maximum_matched_words=None):
+    matched_words = []
+    if maximum_matched_words is not None:
+        for word in wordlist:
+            if does_word_match(word, codeword):
+                matched_words.append(word)
+                if len(matched_words) > maximum_matched_words:
+                    return matched_words
+        return matched_words
+    for word in wordlist:
+        if does_word_match(word, codeword):
+            matched_words.append(word)
+    return matched_words
 
 
 def does_word_match_to_matching_indices(word, matching_indices_dict):
@@ -170,6 +181,12 @@ def does_word_match_to_matching_indices(word, matching_indices_dict):
         for i in indices:
             if char != word[i]:
                 return False
+    return True
+
+def does_word_match_to_fixed_index_values(word, matching_indices_dict):
+    for i, char in matching_indices_dict.items():
+        if word[i] != char:
+            return False
     return True
 
 
@@ -182,6 +199,21 @@ class CodewordPuzzle:
                 if num not in nums_in_codewords:
                     nums_in_codewords.append(num)
         return tuple(sorted(nums_in_codewords))
+    
+    def get_substitution_tuple(self):
+        substitution_tuple = tuple([(key, value) for key, value in self.substitution_dict.items() if value is not None])
+        if substitution_tuple:
+            return substitution_tuple
+    
+    def set_matched_words(self):
+        for codeword, words in self.matched_words.items():
+            matching_indices = {i: self.substitution_dict[num] for i, num in enumerate(codeword) if self.substitution_dict[num] is not None}
+            new_matched_words = []
+            for word in words:
+                if does_word_match_to_fixed_index_values(matching_indices):
+                    new_matched_words.append(word)
+            self.matched_words[codeword] = new_matched_words
+
     
     def __init__(self, codewords, wordlist, alphabet):
         self.codewords = codewords
@@ -199,15 +231,12 @@ class CodewordPuzzle:
                 continue
             self.wordlists[num].append(word)
         
-        self.matched_words = {codeword: get_matching_words(codeword, self.wordlists[len(codeword)]) for codeword in self.codewords}
-        self.matched_words = {codeword: words for codeword, words in self.matched_words.items() if words}
-
-
-    def get_substitution_tuple(self):
-        return tuple([(key, value) for key, value in self.substitution_dict.items() if value is not None])
+        self.matched_words_all = {codeword: get_matching_words(codeword, self.wordlists[len(codeword)]) for codeword in self.codewords}
+        self.matched_words = {codeword: words for codeword, words in self.matched_words_all.items() if words}
 
     def clear_substitution_dict(self):
         self.substitution_dict = {num: None for num in self.substitution_dict.keys()}
+        self.matched_words = self.matched_words_all
 
     def add_to_substitution_dict(self, num, char):
         if num not in self.substitution_dict.keys():

@@ -160,3 +160,19 @@ def test_does_word_match_to_matching_indices():
     assert krypto.does_word_match_to_matching_indices(word, dict_works)
     assert not krypto.does_word_match_to_matching_indices(word, dict_doesnt_work)
     assert not krypto.does_word_match_to_matching_indices(word, dict_doesnt_work_either)
+
+
+def test_does_word_match_to_fixed_index_values():
+    word = "hello"
+    dict_works = {
+        0: "h",
+        2: "l"
+    }
+    dict_doesnt_work = {
+        0: "h",
+        3: "o"
+    }
+    nothing_works = dict()
+    assert krypto.does_word_match_to_fixed_index_values(word, dict_works)
+    assert not krypto.does_word_match_to_fixed_index_values(word, dict_doesnt_work)
+    assert krypto.does_word_match_to_fixed_index_values(word, nothing_works)
