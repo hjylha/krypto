@@ -54,10 +54,15 @@ def get_codeword_path(path_str):
 def get_codewords(codeword_path):
     if not isinstance(codeword_path, Path):
         codeword_path = Path(codeword_path)
+    comments = []
     codewords = []
     with open(codeword_path, "r", encoding = "utf-8") as f:
         for line in f:
-            nums_str = line.strip("\n").split(",")
+            if "#" in line:
+                comment = line.strip().split("#")[1].strip()
+                comments.append(comment)
+                continue
+            nums_str = line.strip().split(",")
             if not nums_str:
                 continue
             nums_str.append("")
@@ -66,7 +71,7 @@ def get_codewords(codeword_path):
                 continue
             word = tuple(int(num) for num in nums)
             codewords.append(word)
-    return codewords
+    return comments, codewords
 
 
 def are_letters_in_alphabet(word, alphabet):
@@ -190,6 +195,12 @@ def does_word_match_to_fixed_index_values(word, matching_indices_dict):
     return True
 
 
+def add_whitespace(word, total_length):
+    shortened_word = word[:total_length]
+    final_word = f"{shortened_word}{' ' * (total_length - len(shortened_word))}"
+    return final_word
+
+
 class CodewordPuzzle:
 
     def get_nums_in_codewords(self):
@@ -201,27 +212,28 @@ class CodewordPuzzle:
         return tuple(sorted(nums_in_codewords))
     
     def get_substitution_tuple(self):
-        substitution_tuple = tuple([(key, value) for key, value in self.substitution_dict.items() if value is not None])
+        substitution_tuple = tuple([(key, value) for key, value in self.substitution_dict.items() if value])
         if substitution_tuple:
             return substitution_tuple
     
     def set_matched_words(self):
         for codeword, words in self.matched_words.items():
-            matching_indices = {i: self.substitution_dict[num] for i, num in enumerate(codeword) if self.substitution_dict[num] is not None}
+            matching_indices = {i: self.substitution_dict[num] for i, num in enumerate(codeword) if self.substitution_dict[num]}
             new_matched_words = []
             for word in words:
-                if does_word_match_to_fixed_index_values(matching_indices):
+                if does_word_match_to_fixed_index_values(word, matching_indices):
                     new_matched_words.append(word)
             self.matched_words[codeword] = new_matched_words
 
     
-    def __init__(self, codewords, wordlist, alphabet):
+    def __init__(self, codewords, wordlist, alphabet, comments):
         self.codewords = codewords
         self.alphabet = alphabet
         self.wordlist = wordlist
+        self.comments = comments
 
         self.nums_in_codewords = self.get_nums_in_codewords()
-        self.substitution_dict = {num: None for num in self.nums_in_codewords}
+        self.substitution_dict = {num: "" for num in self.nums_in_codewords}
 
         self.wordlists = dict()
         for word in self.wordlist:
@@ -235,7 +247,7 @@ class CodewordPuzzle:
         self.matched_words = {codeword: words for codeword, words in self.matched_words_all.items() if words}
 
     def clear_substitution_dict(self):
-        self.substitution_dict = {num: None for num in self.substitution_dict.keys()}
+        self.substitution_dict = {num: "" for num in self.substitution_dict.keys()}
         self.matched_words = self.matched_words_all
 
     def add_to_substitution_dict(self, num, char):
@@ -243,8 +255,18 @@ class CodewordPuzzle:
             return False
         self.substitution_dict[num] = char
         return True
+    
+    def get_decrypted_codeword(self, codeword, not_found_symbol="?"):
+        chars = []
+        for num in codeword:
+            char = self.substitution_dict[num]
+            if char:
+                chars.append(char)
+                continue
+            chars.append(not_found_symbol)
+        return "".join(chars)            
 
-    def match_two_codewords(self, codeword1, codeword2):
+    def match_two_codewords(self, codeword1, codeword2, maximum_matches):
         matching_indices = dict()
         for char in codeword1:
             if matching_indices.get(char) is None:
@@ -258,6 +280,8 @@ class CodewordPuzzle:
             for word2 in self.matched_words[codeword2]:
                 if does_word_match_to_matching_indices(word2, m_indices):
                     matching_pairs.append((word1, word2))
+                    if len(matching_pairs) > maximum_matches:
+                        return []
         return matching_pairs
     
     def match_all_codeword_pairs(self, max_unique_pairs = 5):
@@ -280,14 +304,33 @@ class CodewordPuzzle:
                     return matched_pairs
         return matched_pairs
 
-    def find_unique_pairs(self):
+    def find_pairs(self):
         codewords_to_match = sorted(self.matched_words.keys(), key=lambda c: len(self.matched_words[c]))
+        maximum_num_of_pairs = 1
+        pairs_left = set()
         for i, codeword1 in enumerate(codewords_to_match):
             for codeword2 in codewords_to_match[i + 1:]:
-                matched_pairs = self.match_two_codewords(codeword1, codeword2)
-                if len(matched_pairs) == 1:
+                matched_pairs = self.match_two_codewords(codeword1, codeword2, maximum_num_of_pairs)
+                if len(matched_pairs) == maximum_num_of_pairs:
                     yield (codeword1, codeword2), matched_pairs[0]
-
+                else:
+                    pairs_left.add((codeword1, codeword2))
+        # i guess make sure this still does somethisg even if no unique pairs were found
+        maximum_num_of_pairs += 1
+        while pairs_left:
+            pairs_still_left = set()
+            for codeword1, codeword2 in pairs_left:
+                matched_pairs = self.match_two_codewords(codeword1, codeword2, maximum_num_of_pairs)
+                if len(matched_pairs) == maximum_num_of_pairs:
+                    
+                    for pair in matched_pairs:
+                        yield (codeword1, codeword2), pair
+                else:
+                    pairs_still_left.add((codeword1, codeword2))
+            pairs_left = pairs_still_left
+            maximum_num_of_pairs += 1
+            
+                
     def try_more_words(self, codewords, matched_codewords, substitution_tuple, minimum_matches_wanted):
         if not codewords:
             return matched_codewords, substitution_tuple
@@ -304,8 +347,13 @@ class CodewordPuzzle:
         return matched_codewords, substitution_tuple
 
     def start_matching_words(self, minimum_matches_wanted):
-        for codeword_pair, word_pair in self.find_unique_pairs():
+        for codeword_pair, word_pair in self.find_pairs():
+            print("Trying with pair:")
+            print(codeword_pair, word_pair)
             substitution_tuple = get_substitution_tuple(codeword_pair, word_pair)
+            for num, char in substitution_tuple:
+                self.add_to_substitution_dict(num, char)
+            self.set_matched_words()
             codewords = [codeword for codeword in self.matched_words.keys() if codeword not in codeword_pair]
             codewords = sorted(codewords, key=lambda c: len(self.matched_words[c]))
             matched_codewords, substitution_tuple = self.try_more_words(codewords, codeword_pair, substitution_tuple, minimum_matches_wanted)
@@ -440,7 +488,7 @@ class Krypto:
                 return
 
     def initialize_puzzle(self, codeword_path, wordlist_path=None):
-        codewords = get_codewords(codeword_path)
+        comments, codewords = get_codewords(codeword_path)
         # config = read_config(config_path)[language_tag.lower()]
         alphabet = self.config[self.language][self.ALPHABET_KEY]
         if wordlist_path is None:
@@ -448,7 +496,7 @@ class Krypto:
         else:
             wordlist = get_wordlist(wordlist_path)
         wordlist = [word for word in wordlist if are_letters_in_alphabet(word, alphabet)]
-        self.puzzle = CodewordPuzzle(codewords, wordlist, alphabet)
+        self.puzzle = CodewordPuzzle(codewords, wordlist, alphabet, comments)
 
     def input_data_and_initialize_puzzle(self, language=None, codeword_path=None):
         if language is None:
@@ -464,6 +512,36 @@ class Krypto:
         for num, char in substitution_tuple:
             self.puzzle.substitution_dict[num] = char
         return solved_codewords, substitution_tuple
+    
+    def print_substitution_dict(self):
+        nums = sorted(self.puzzle.substitution_dict.keys())
+        nums_as_str = [str(num) for num in nums]
+        first_line = " | ".join(nums_as_str)
+        print(first_line)
+        values = []
+        for num in nums:
+            char = self.puzzle.substitution_dict[num].upper()
+            if not char:
+                char = " "
+            char = add_whitespace(char, len(str(num)))
+            # if char := self.puzzle.substitution_dict[num]:
+            #     values.append(char.upper())
+            # else:
+            #     values.append(" ")
+            values.append(char)
+        second_line = " | ".join(values)
+        print(second_line)
+
+    def print_codeword_progress(self, codewords=None, not_found_symbol="_"):
+        if codewords is None:
+            codewords = self.puzzle.codewords
+        num_of_chars = 0
+        for codeword in codewords:
+            if len(codeword) > num_of_chars:
+                num_of_chars = len(codeword)
+        for codeword in codewords:
+            word = self.puzzle.get_decrypted_codeword(codeword, not_found_symbol)
+            print(f"{add_whitespace(word, num_of_chars).upper()} \t {codeword}")
 
     def add_config(self):
         pass
@@ -528,16 +606,25 @@ if __name__ == "__main__":
     print()
     print(f"Trying to solve using pairs...")
     start_time = time.time()
-    cw1, st1 = K.puzzle.start_matching_words(7)
+    cw1, st1 = K.puzzle.start_matching_words(20)
     end_time = time.time()
     print(f"{len(cw1)} codewords solved.")
     print(f"{len(st1)} out of {len(K.puzzle.substitution_dict)} numbers deciphered.")
 
     print(f"Time elapsed: {round(end_time - start_time, 3)} seconds.\n")
-    print("Substitution table:")
+
     for num, char in st1:
-        if char:
-            print(f"{num}\t{char}")
+        K.puzzle.add_to_substitution_dict(num, char)
+        # K.puzzle.substitution_dict[num] = char
+    print("Substitution table:")
+    # for num, char in st1:
+    #     if char:
+    #         print(f"{num}\t{char}")
+    K.print_substitution_dict()
+
+    print()
+    print("Codewords:")
+    K.print_codeword_progress()
     # good_pairs = {cws: ps for cws, ps in m_p.items() if len(ps) == 1}
     # print(f"Found {len(good_pairs)} pairs with unique match.")
 

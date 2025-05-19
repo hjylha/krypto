@@ -29,7 +29,9 @@ def test_get_codewords():
         (8, 10, 11),
         (10, 12, 13)
     ]
-    assert krypto.get_codewords(codeword_path) == expected_codewords
+    comments, codewords = krypto.get_codewords(codeword_path)
+    assert comments == []
+    assert codewords == expected_codewords
 
 
 @pytest.mark.parametrize(
@@ -176,3 +178,16 @@ def test_does_word_match_to_fixed_index_values():
     assert krypto.does_word_match_to_fixed_index_values(word, dict_works)
     assert not krypto.does_word_match_to_fixed_index_values(word, dict_doesnt_work)
     assert krypto.does_word_match_to_fixed_index_values(word, nothing_works)
+
+
+@pytest.mark.parametrize(
+        "word, total_length, result", [
+            ("hello", 7, "hello  "),
+            ("world", 4, "worl"),
+            ("longer", 10, "longer    "),
+            ("uncharacteristic", 16, "uncharacteristic")
+        ]
+)
+def test_add_whitespace(word, total_length, result):
+    assert krypto.add_whitespace(word, total_length) == result
+
