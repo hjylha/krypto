@@ -333,7 +333,7 @@ class CodewordPuzzle:
             for codeword2 in codewords_to_match[i + 1:]:
                 matched_pairs = self.match_two_codewords(codeword1, codeword2, 1)
                 if matched_pairs:
-                    unique_pairs.append((codeword1, codeword2), matched_pairs[0])
+                    unique_pairs.append(((codeword1, codeword2), matched_pairs[0]))
         return unique_pairs
 
     def find_pairs(self):
@@ -598,19 +598,26 @@ class Krypto:
 
     def find_unique_pairs(self):
         unique_pairs = self.puzzle.find_all_unique_pairs()
+        print(f"Found {len(unique_pairs)} unique pairs:")
         max_length = 0
+        for codeword_pair, _ in unique_pairs:
+            codeword1, codeword2 = codeword_pair
+            codeword1_str = ','.join([str(num) for num in codeword1])
+            codeword2_str = ','.join([str(num) for num in codeword2])
+            if (new_max := max(len(codeword1_str), len(codeword2_str))) > max_length:
+                max_length = new_max
         for codeword_pair, word_pair in unique_pairs:
             codeword1, codeword2 = codeword_pair
-            if max_length < (new_max := max(len(codeword1), len(codeword2))):
-                max_length= new_max
             word1, word2 = word_pair
             index1 = self.puzzle.codewords.index(codeword1)
             index2 = self.puzzle.codewords.index(codeword2)
-            part1 = f"{add_whitespace(index1, 4)} {add_whitespace(','.join(codeword1), max_length)}"
-            part2 = f"{add_whitespace(index2, 4)} {add_whitespace(','.join(codeword2), max_length)}"
+            codeword1_str = ','.join([str(num) for num in codeword1])
+            codeword2_str = ','.join([str(num) for num in codeword2])
+            part1 = f"{add_whitespace(str(index1), 4)} {add_whitespace(codeword1_str, max_length)}"
+            part2 = f"{add_whitespace(str(index2), 4)} {add_whitespace(codeword2_str, max_length)}"
             part3 = f"{add_whitespace(word1, max_length)}"
             part4 = f"{add_whitespace(word2, max_length)}"
-            print(f"{part1}  {part2} \t {part3}  {part4}")
+            print(f"{part1}  {part2}    {part3}  {part4}")
         return unique_pairs
 
     def try_to_solve_puzzle(self, minimum_matches_wanted=None):
