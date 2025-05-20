@@ -1,4 +1,7 @@
 
+import os
+import sys
+import time
 from pathlib import Path
 
 
@@ -250,11 +253,30 @@ class CodewordPuzzle:
         self.substitution_dict = {num: "" for num in self.substitution_dict.keys()}
         self.matched_words = self.matched_words_all
 
-    def add_to_substitution_dict(self, num, char):
+    def add_to_substitution_dict(self, num, char, issues=None):
         if num not in self.substitution_dict.keys():
+            if issues:
+                return issues["invalid number"]
+            return True
+        if char == "":
+            self.substitution_dict[num] = char
             return False
+        if char.lower() not in [c.lower() for c in self.alphabet]:
+            if issues:
+                return issues["invalid letter"]
+            return True
+        # is this needed?
+        if char in self.substitution_dict.values():
+            if issues:
+                return issues["double letter"]
+            return True
         self.substitution_dict[num] = char
-        return True
+        return False
+    
+    def find_char_from_substitution_dict(self, char):
+        for num, value in self.substitution_dict.items():
+            if value.lower() == char.lower():
+                return num
     
     def get_decrypted_codeword(self, codeword, not_found_symbol="?"):
         chars = []
@@ -303,6 +325,16 @@ class CodewordPuzzle:
                 if num_of_unique_pairs >= max_unique_pairs:
                     return matched_pairs
         return matched_pairs
+    
+    def find_all_unique_pairs(self):
+        unique_pairs = []
+        codewords_to_match = sorted(self.matched_words.keys(), key=lambda c: len(self.matched_words[c]))
+        for i, codeword1 in enumerate(codewords_to_match):
+            for codeword2 in codewords_to_match[i + 1:]:
+                matched_pairs = self.match_two_codewords(codeword1, codeword2, 1)
+                if matched_pairs:
+                    unique_pairs.append((codeword1, codeword2), matched_pairs[0])
+        return unique_pairs
 
     def find_pairs(self):
         codewords_to_match = sorted(self.matched_words.keys(), key=lambda c: len(self.matched_words[c]))
@@ -423,14 +455,25 @@ class CodewordPuzzle:
         return matched_codewords, substitution_tuple
 
 
-def yes_or_no_question(question_text):
+# some UI functions
+def clear_screen():
+    # for windows
+    if os.name == 'nt':
+        _ = os.system('cls')
+    # for mac or linux
+    else:
+        _ = os.system('clear')
+
+
+def yes_or_no_question(question_text, yes_no_tuple=("y", "n")):
+    y_dash_n = f"({yes_no_tuple[0].upper()}/{yes_no_tuple[1].upper()})"
     help_text = 'Please answer Y or N for yes or no.'
     while True:
-        answer = input(f'{question_text} (Y/N) ')
-        if answer.lower() == 'y':
-            return 'y'
-        if answer.lower() == 'n':
-            return 'n'
+        answer = input(f'{question_text} {y_dash_n} ')
+        if answer.lower() == yes_no_tuple[0]:
+            return True
+        if answer.lower() == yes_no_tuple[1]:
+            return False
         print(help_text)
 
 
@@ -440,12 +483,16 @@ class Krypto:
     ALPHABET_KEY = "alphabet"
     WORDLIST_PATH_KEY = "wordlist_path"
 
-    def __init__(self, config_path=DEFAULT_CONFIG_PATH, language=None, puzzle=None, codeword_path=None):
+    def __init__(self, config_path=DEFAULT_CONFIG_PATH, language=None, wordlist_path=None, codeword_path=None, puzzle=None):
         default_language, config = read_config(config_path)
         self.config = config
         if language is None:
             language = default_language
         self.language = language
+        if wordlist_path is None:
+            wordlist_path = self.config[self.language][self.WORDLIST_PATH_KEY]
+        self.wordlist_path = wordlist_path
+        self.codeword_path = codeword_path
         self.puzzle = puzzle
 
     def choose_language(self):
@@ -462,13 +509,13 @@ class Krypto:
             while not_confirmed:
                 add_new_language = yes_or_no_question(f"Do you want to add a new language, {language_answer}? [NOTE: This has not been implemented yet]")
                 # yes_or_no = input(f"Do you want to add a new language, {language_answer}? (Y/N) ")
-                if add_new_language.lower() == "y":
+                if add_new_language:
                     self.language = language_answer
                     return
-                if add_new_language.lower() == "n":
+                if not add_new_language:
                     # try_again = input("Do you want to try again? (Y/N) ")
                     try_again = yes_or_no_question("Do you want to try again?")
-                    if try_again.lower() == "n":
+                    if not try_again:
                         return
                     
     def choose_codeword_path(self):
@@ -486,6 +533,19 @@ class Krypto:
             try_again = yes_or_no_question(f"File {path_answer} does not exist. Do you want to try again?")
             if not try_again:
                 return
+            
+    def get_command_line_arguments(self):
+        language = None
+        codeword_path = None
+        for arg in sys.argv[1:]:
+            if arg in self.config.keys():
+                language = arg
+                continue
+            if possible_codeword_path := get_codeword_path(arg):
+                codeword_path = possible_codeword_path
+                continue
+        return language, codeword_path
+
 
     def initialize_puzzle(self, codeword_path, wordlist_path=None):
         comments, codewords = get_codewords(codeword_path)
@@ -503,14 +563,71 @@ class Krypto:
             self.choose_language()
         if codeword_path is None:
             codeword_path = self.choose_codeword_path()
+        if not codeword_path:
+            return
         self.initialize_puzzle(codeword_path)
+    
+    def add_to_substitution_dict(self):
+        issues = {
+            "invalid number": 1,
+            "invalid letter": 2,
+            "double letter": 3 
+        }
+        num = int(input("Number: "))
+        char = input("Letter: ")
+        issue = self.puzzle.add_to_substitution_dict(num, char, issues)
+        if not issues:
+            return
+        if issue == 1:
+            print(f"{num} is not a valid number")
+            return
+        if issue == 2:
+            print(f"{char} not in alphabet ({self.puzzle.alphabet})")
+            return
+        if issue == 3:
+            num_already = self.puzzle.find_char_from_substitution_dict(char)
+            print(f"{char} already in table ({num_already})")
 
-    def try_to_solve_puzzle(self, minimum_matches_wanted, minimum_letter_matches_wanted, num_of_iterations):
-        solved_codewords, substitution_tuple = self.puzzle.try_to_match_words_to_numbers(minimum_matches_wanted, minimum_letter_matches_wanted, num_of_iterations)
+    def set_codeword_as_word(self):
+        codeword_input = input("Codeword (index number or numbers separated by commas): ")
+        try:
+            codeword_index = int(codeword_input.strip()) - 1
+            codeword = self.puzzle.codewords[codeword_index]
+        except ValueError:
+            pass
+
+    def find_unique_pairs(self):
+        unique_pairs = self.puzzle.find_all_unique_pairs()
+        max_length = 0
+        for codeword_pair, word_pair in unique_pairs:
+            codeword1, codeword2 = codeword_pair
+            if max_length < (new_max := max(len(codeword1), len(codeword2))):
+                max_length= new_max
+            word1, word2 = word_pair
+            index1 = self.puzzle.codewords.index(codeword1)
+            index2 = self.puzzle.codewords.index(codeword2)
+            part1 = f"{add_whitespace(index1, 4)} {add_whitespace(','.join(codeword1), max_length)}"
+            part2 = f"{add_whitespace(index2, 4)} {add_whitespace(','.join(codeword2), max_length)}"
+            part3 = f"{add_whitespace(word1, max_length)}"
+            part4 = f"{add_whitespace(word2, max_length)}"
+            print(f"{part1}  {part2} \t {part3}  {part4}")
+        return unique_pairs
+
+    def try_to_solve_puzzle(self, minimum_matches_wanted=None):
+    # def try_to_solve_puzzle(self, minimum_matches_wanted, minimum_letter_matches_wanted, num_of_iterations):
+        # solved_codewords, substitution_tuple = self.puzzle.try_to_match_words_to_numbers(minimum_matches_wanted, minimum_letter_matches_wanted, num_of_iterations)
+        if minimum_matches_wanted is None:
+            # TODO: what is a good default here?
+            minimum_matches_wanted = len(self.puzzle.codewords) // 5
+        start_time = time.time()
+        solved_codewords, substitution_tuple = self.puzzle.start_matching_words(minimum_matches_wanted)
+        end_time = time.time()
+        print(f"Time to reach at least {minimum_matches_wanted} words: {round(end_time - start_time, 3)} seconds.")
         print(f"{len(solved_codewords)} out of {len(self.puzzle.codewords)} words found.")
         print(f"{len(substitution_tuple)} out of {len(self.puzzle.substitution_dict)} numbers deciphered.")
         for num, char in substitution_tuple:
-            self.puzzle.substitution_dict[num] = char
+            # self.puzzle.substitution_dict[num] = char
+            self.puzzle.add_to_substitution_dict(num, char)
         return solved_codewords, substitution_tuple
     
     def print_substitution_dict(self):
@@ -539,9 +656,37 @@ class Krypto:
         for codeword in codewords:
             if len(codeword) > num_of_chars:
                 num_of_chars = len(codeword)
-        for codeword in codewords:
+        for i, codeword in enumerate(codewords):
             word = self.puzzle.get_decrypted_codeword(codeword, not_found_symbol)
-            print(f"{add_whitespace(word, num_of_chars).upper()} \t {codeword}")
+            print(f"{add_whitespace(str(i + 1), 4)} {add_whitespace(word, num_of_chars).upper()} \t {codeword}")
+    
+    def choose_main_choice(self):
+        print()
+        self.print_substitution_dict()
+        print()
+        choices = (
+            ("Set a number-letter correspondence in the substitution table", self.add_to_substitution_dict),
+            ("Show codeword puzzle progress", self.print_codeword_progress),
+            ("Find unique pairs", self.find_unique_pairs),
+            ("Try to solve the codeword puzzle", self.try_to_solve_puzzle),
+            ("Clear the substitution table", self.puzzle.clear_substitution_dict),
+            ("Clear screen", clear_screen),
+            ("Exit", exit)
+        )
+        print("Choose an action:")
+        for i, choice in enumerate(choices):
+            if i == len(choices) -1:
+                ordinal = 0
+            else:
+                ordinal = i + 1
+            print(f"{ordinal}\t {choice[0]}")
+        print()
+        choice_num = int(input())
+        if choice_num == 0:
+            ans = yes_or_no_question("Are you sure you want to quit?")
+            if ans:
+                exit()
+        return choices[choice_num - 1][1]
 
     def add_config(self):
         pass
@@ -553,80 +698,45 @@ class Krypto:
         pass
 
 
-if __name__ == "__main__":
-
-    import sys
-    import time
-
-    language = "fi"
-    # language = "en"
-    krypto_path = "krypto51-52.csv"
-    K = Krypto()
-    # have_language_and_codeword_path = False
-    language_selected = False
-    codeword_path = None
-    for item in sys.argv[1:]:
-        if item in K.config.keys():
-            K.language = item
-            language_selected = True
-            continue
-        # if K.language is None:
-            
-        if codeword_path is None:
-            codeword_path = get_codeword_path(item)
-            if codeword_path is not None:
-                continue
-    # K.choose_language()
-    # print(f"Chosen {K.language}")
-    # codeword_path = K.choose_codeword_path()
-    # print(f"Chosen {codeword_path}")
-    if language_selected and codeword_path:
-        K.initialize_puzzle(codeword_path)
-    elif language_selected:
-        K.input_data_and_initialize_puzzle(language=K.language)
+def main_krypto():
+    start_time_first = time.time()
+    krypto = Krypto()
+    language, codeword_path = krypto.get_command_line_arguments()
+    if language:
+        krypto.language = language
+    
+    if language and codeword_path:
+        krypto.initialize_puzzle(codeword_path)
+    elif language:
+        krypto.input_data_and_initialize_puzzle(language=krypto.language)
     elif codeword_path:
-        K.input_data_and_initialize_puzzle(codeword_path=codeword_path)
+        krypto.input_data_and_initialize_puzzle(codeword_path=codeword_path)
     else:
-        K.input_data_and_initialize_puzzle()
-    print(f"Language: {K.language}")
-    print(f"{len(K.puzzle.codewords)} codewords")
-    print(f"{len(K.puzzle.wordlist)} words")
+        krypto.input_data_and_initialize_puzzle()
+    
+    end_time_startup = time.time()
+    print(f"\nTime taken to startup: {round(end_time_startup - start_time_first, 3)} seconds.\n")
 
-    # start_time = time.time()
-    # cw, st = K.try_to_solve_puzzle(10, 3, 5)
-    # end_time = time.time()
-
-    # print(f"\nTime elapsed: {round(end_time - start_time, 3)} seconds.\n")
-
-    # print("Substitution table:")
-    # for num, char in K.puzzle.substitution_dict.items():
-    #     if char:
-    #         print(f"{num}\t{char}")
-
-    print()
-    print(f"Trying to solve using pairs...")
-    start_time = time.time()
-    cw1, st1 = K.puzzle.start_matching_words(20)
-    end_time = time.time()
-    print(f"{len(cw1)} codewords solved.")
-    print(f"{len(st1)} out of {len(K.puzzle.substitution_dict)} numbers deciphered.")
-
-    print(f"Time elapsed: {round(end_time - start_time, 3)} seconds.\n")
-
-    for num, char in st1:
-        K.puzzle.add_to_substitution_dict(num, char)
-        # K.puzzle.substitution_dict[num] = char
-    print("Substitution table:")
-    # for num, char in st1:
-    #     if char:
-    #         print(f"{num}\t{char}")
-    K.print_substitution_dict()
+    print(f"Language: {krypto.config[krypto.language]["name"]}")
+    print(f"{len(krypto.puzzle.codewords)} codewords")
+    print(f"{len(krypto.puzzle.wordlist)} words")
+    if krypto.puzzle.comments:
+        print("Comments about codeword puzzle:")
+        for comment in krypto.puzzle.comments:
+            print(f"{comment}")
+    # print()
+    # krypto.print_substitution_dict()
 
     print()
-    print("Codewords:")
-    K.print_codeword_progress()
-    # good_pairs = {cws: ps for cws, ps in m_p.items() if len(ps) == 1}
-    # print(f"Found {len(good_pairs)} pairs with unique match.")
+
+    while True:
+        action = krypto.choose_main_choice()
+        action()
+    return krypto
+
+
+if __name__ == "__main__":
+    K = main_krypto()
 
 
 
