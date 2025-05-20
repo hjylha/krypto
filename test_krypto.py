@@ -191,3 +191,13 @@ def test_does_word_match_to_fixed_index_values():
 def test_add_whitespace(word, total_length, result):
     assert krypto.add_whitespace(word, total_length) == result
 
+
+@pytest.mark.parametrize(
+        "codeword, written_codeword", [
+            ((1, 1, 1, 1), "1,1,1,1"),
+            ((1, 2, 3), "1,2,3"),
+            ((25, 30, 10, 0), "25,30,10,0")
+        ]
+)
+def test_codeword_as_str(codeword, written_codeword):
+    assert krypto.codeword_as_str(codeword) == written_codeword

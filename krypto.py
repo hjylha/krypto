@@ -204,6 +204,10 @@ def add_whitespace(word, total_length):
     return final_word
 
 
+def codeword_as_str(codeword):
+    return ",".join([str(num) for num in codeword])
+
+
 class CodewordPuzzle:
 
     def get_nums_in_codewords(self):
@@ -220,7 +224,7 @@ class CodewordPuzzle:
             return substitution_tuple
     
     def set_matched_words(self):
-        for codeword, words in self.matched_words.items():
+        for codeword, words in self.matched_words_all.items():
             matching_indices = {i: self.substitution_dict[num] for i, num in enumerate(codeword) if self.substitution_dict[num]}
             new_matched_words = []
             for word in words:
@@ -253,13 +257,14 @@ class CodewordPuzzle:
         self.substitution_dict = {num: "" for num in self.substitution_dict.keys()}
         self.matched_words = self.matched_words_all
 
-    def add_to_substitution_dict(self, num, char, issues=None):
+    def add_to_substitution_dict(self, num, char, issues=None, override=False):
         if num not in self.substitution_dict.keys():
             if issues:
                 return issues["invalid number"]
             return True
         if char == "":
             self.substitution_dict[num] = char
+            self.set_matched_words()
             return False
         if char.lower() not in [c.lower() for c in self.alphabet]:
             if issues:
@@ -267,16 +272,33 @@ class CodewordPuzzle:
             return True
         # is this needed?
         if char in self.substitution_dict.values():
+            if override:
+                previous_num = self.find_char_from_substitution_dict(char)
+                self.substitution_dict[previous_num] = ""
+                self.substitution_dict[num] = char
             if issues:
                 return issues["double letter"]
             return True
         self.substitution_dict[num] = char
+        self.set_matched_words()
         return False
     
     def find_char_from_substitution_dict(self, char):
         for num, value in self.substitution_dict.items():
             if value.lower() == char.lower():
                 return num
+    
+    def find_codeword(self, codeword_str):
+        try:
+            codeword_index = int(codeword_str) - 1
+            return self.codewords[codeword_index]
+        except ValueError:
+            codeword = tuple([int(item.strip()) for item in codeword_str.split(",")])
+            if codeword in self.codewords:
+                return codeword
+            codeword = tuple([int(item.strip()) for item in codeword_str.split(" ")])
+            if codeword in self.codewords:
+                return codeword
     
     def get_decrypted_codeword(self, codeword, not_found_symbol="?"):
         chars = []
@@ -573,28 +595,49 @@ class Krypto:
             "invalid letter": 2,
             "double letter": 3 
         }
-        num = int(input("Number: "))
-        char = input("Letter: ")
-        issue = self.puzzle.add_to_substitution_dict(num, char, issues)
-        if not issues:
-            return
-        if issue == 1:
-            print(f"{num} is not a valid number")
-            return
-        if issue == 2:
-            print(f"{char} not in alphabet ({self.puzzle.alphabet})")
-            return
-        if issue == 3:
-            num_already = self.puzzle.find_char_from_substitution_dict(char)
-            print(f"{char} already in table ({num_already})")
+        num_input = input("Number (or numbers separated by commas): ")
+        char = input("Letter (or letters separated by commas): ")
+        try:
+            num = int(num_input)
+            nums = [num]
+            chars = [char]
+        except ValueError:
+            nums = [int(num.strip()) for num in num_input.split(",")]
+            chars = [c.strip() for c in char.split(",")]
+        for num, char in zip(nums, chars):
+            issue = self.puzzle.add_to_substitution_dict(num, char, issues)
+            if not issues:
+                continue
+            if issue == 1:
+                print(f"{num} is not a valid number")
+                continue
+            if issue == 2:
+                print(f"{char} not in alphabet ({self.puzzle.alphabet})")
+                continue
+            if issue == 3:
+                num_already = self.puzzle.find_char_from_substitution_dict(char)
+                print(f"{char} already in table ({num_already})")
 
     def set_codeword_as_word(self):
         codeword_input = input("Codeword (index number or numbers separated by commas): ")
         try:
-            codeword_index = int(codeword_input.strip()) - 1
-            codeword = self.puzzle.codewords[codeword_index]
+            codeword = self.puzzle.find_codeword(codeword_input)
         except ValueError:
-            pass
+            print("Cancelled")
+            return
+        if not codeword:
+            print(f"{codeword_input} is not a valid codeword")
+            return
+        word = input("Word: ").lower()
+        if not does_word_match(word, codeword):
+            print(f"{word} and {codeword} do not match")
+        if word in self.puzzle.matched_words_all[codeword]:
+            print(f"{word} is in wordlist")
+        else:
+            print(f"{word} is NOT in wordlist")
+        for num, char in zip(codeword, [c for c in word]):
+            self.puzzle.add_to_substitution_dict(num, char, override=True)
+        self.puzzle.set_matched_words()
 
     def find_unique_pairs(self):
         unique_pairs = self.puzzle.find_all_unique_pairs()
@@ -655,31 +698,58 @@ class Krypto:
             values.append(char)
         second_line = " | ".join(values)
         print(second_line)
+    
+    def print_missing_chars(self):
+        print("Letters yet to be included in substitution table:")
+        for char in self.puzzle.alphabet:
+            if char not in self.puzzle.substitution_dict.values():
+                print(f"{char.upper()}", end="  ")
 
     def print_codeword_progress(self, codewords=None, not_found_symbol="_"):
         if codewords is None:
             codewords = self.puzzle.codewords
-        num_of_chars = 0
+        self.puzzle.set_matched_words()
+        num_of_chars1 = 0
+        num_of_chars2 = 0
         for codeword in codewords:
-            if len(codeword) > num_of_chars:
-                num_of_chars = len(codeword)
-        for i, codeword in enumerate(codewords):
+            if len(codeword) > num_of_chars1:
+                num_of_chars1 = len(codeword)
+            codeword_str = ','.join([str(num) for num in codeword])
+            if len(codeword_str) > num_of_chars2:
+                num_of_chars2 = len(codeword_str)
+        for codeword in codewords:
+            i = self.puzzle.codewords.index(codeword)
             word = self.puzzle.get_decrypted_codeword(codeword, not_found_symbol)
-            print(f"{add_whitespace(str(i + 1), 4)} {add_whitespace(word, num_of_chars).upper()} \t {codeword}")
+            codeword_str = ','.join([str(num) for num in codeword])
+            print(f"{add_whitespace(str(i + 1), 4)} {add_whitespace(word, num_of_chars1).upper()} \t {add_whitespace(codeword_str, num_of_chars2)} \t {len(self.puzzle.matched_words[codeword])} matching words")
     
+    def show_matching_words(self):
+        codeword_input = input("Codeword (index number or numbers separated by commas): ")
+        codeword = self.puzzle.find_codeword(codeword_input)
+        if codeword is None:
+            print(f"Codeword corresponding to {codeword_input} not found.")
+            return
+        print(f"{len(self.puzzle.matched_words[codeword])} words match {codeword}:")
+        for word in self.puzzle.matched_words[codeword]:
+            print(word.upper())
+        
+
     def choose_main_choice(self):
         print()
         self.print_substitution_dict()
         print()
-        choices = (
+        choices = [
             ("Set a number-letter correspondence in the substitution table", self.add_to_substitution_dict),
+            ("Set a codeword as word", self.set_codeword_as_word),
+            ("Show missing letters", self.print_missing_chars),
             ("Show codeword puzzle progress", self.print_codeword_progress),
+            ("Show matching words for codeword", self.show_matching_words),
             ("Find unique pairs", self.find_unique_pairs),
             ("Try to solve the codeword puzzle", self.try_to_solve_puzzle),
-            ("Clear the substitution table", self.puzzle.clear_substitution_dict),
+            ("Restart (Clear the substitution table)", self.puzzle.clear_substitution_dict),
             ("Clear screen", clear_screen),
             ("Exit", exit)
-        )
+        ]
         print("Choose an action:")
         for i, choice in enumerate(choices):
             if i == len(choices) -1:
@@ -689,6 +759,7 @@ class Krypto:
             print(f"{ordinal}\t {choice[0]}")
         print()
         choice_num = int(input())
+        print()
         if choice_num == 0:
             ans = yes_or_no_question("Are you sure you want to quit?")
             if ans:
@@ -737,6 +808,7 @@ def main_krypto():
     print()
 
     while True:
+        print()
         action = krypto.choose_main_choice()
         action()
     return krypto
