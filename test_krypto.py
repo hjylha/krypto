@@ -15,6 +15,17 @@ def test_read_config():
     assert config_dict["another_tag"]["wordlist_path"] is None
 
 
+def test_get_language_dict():
+    language_file_path = Path(__file__).parent / "language_file"
+    language_dict = krypto.get_language_dict(language_file_path)
+    assert "fi" in language_dict.keys()
+    assert "en" in language_dict.keys()
+    assert language_dict["fi"]["yes"] == "kyllä"
+    assert language_dict["en"]["no"] == "no"
+    assert language_dict["fi"]["words_in_file"] == "%1% sanaa tiedostossa %2%"
+    assert language_dict["en"]["find_unique_pairs"] == "Find unique pairs"
+
+
 def test_get_wordlist():
     wordlist_path = Path(__file__).parent / "test_stuff" / "test_wordlist"
     expected_wordlist = ["some", "words", "here", "to", "be", "read", "by", "someone", "or", "something"]

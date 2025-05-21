@@ -9,7 +9,6 @@ def read_config(config_path):
     readings = dict()
     default_language = None
     with open(config_path, "r", encoding = "utf-8") as f:
-        # language_tag = None
         for line in f:
             filtered_line = line.split("#")[0].strip()
             if not filtered_line:
@@ -32,11 +31,27 @@ def read_config(config_path):
     return default_language, readings
 
 
+def get_language_dict(language_file_path):
+    language_dict = dict()
+    with open(language_file_path, "r", encoding = "utf-8") as f:
+        for i, line in enumerate(f):
+            if i == 0:
+                languages = [item for item in line.split(";")[1:] if item]
+                for language in languages:
+                    language_dict[language] = dict()
+                continue
+            if not line.strip():
+                continue
+            items = line.split(";")[:len(languages) + 1]
+            for language, item in zip(languages, items[1:]):
+                language_dict[language][items[0]] = item
+    return language_dict
+
+
 def get_wordlist(wordlist_path):
     if not isinstance(wordlist_path, Path):
         wordlist_path = Path(wordlist_path)
     wordlist = []
-    print(f"Wordlist path: {wordlist_path}")
     with open(wordlist_path, "r", encoding = "utf-8") as f:
         for line in f:
             word = line.split("\t")[0].strip().lower()
@@ -487,9 +502,8 @@ def clear_screen():
         _ = os.system('clear')
 
 
-def yes_or_no_question(question_text, yes_no_tuple=("y", "n")):
+def yes_or_no_question(question_text, yes_no_tuple=("y", "n"), help_text="Please answer Y or N for yes or no."):
     y_dash_n = f"({yes_no_tuple[0].upper()}/{yes_no_tuple[1].upper()})"
-    help_text = 'Please answer Y or N for yes or no.'
     while True:
         answer = input(f'{question_text} {y_dash_n} ')
         if answer.lower() == yes_no_tuple[0]:
@@ -500,28 +514,42 @@ def yes_or_no_question(question_text, yes_no_tuple=("y", "n")):
 
 
 class Krypto:
+    DEFAULT_LANGUAGE_FILE_PATH = "language_file"
     DEFAULT_CONFIG_PATH = "krypto.conf"
     NAME_KEY = "name"
     ALPHABET_KEY = "alphabet"
     WORDLIST_PATH_KEY = "wordlist_path"
 
-    def __init__(self, config_path=DEFAULT_CONFIG_PATH, language=None, wordlist_path=None, codeword_path=None, puzzle=None):
+    def __init__(self, language_file_path=DEFAULT_LANGUAGE_FILE_PATH, config_path=DEFAULT_CONFIG_PATH, language=None, wordlist_path=None, codeword_path=None, puzzle=None):
+        self.language_dict = get_language_dict(language_file_path)
         default_language, config = read_config(config_path)
         self.config = config
         if language is None:
             language = default_language
         self.language = language
+        self.current_language_dict = self.language_dict[self.language]
         if wordlist_path is None:
             wordlist_path = self.config[self.language][self.WORDLIST_PATH_KEY]
         self.wordlist_path = wordlist_path
         self.codeword_path = codeword_path
         self.puzzle = puzzle
 
+    def get_yes_no_tuple(self):
+        return (self.current_language_dict["yes"][0], self.current_language_dict["no"][0])
+
+    def yes_no_question(self, question_text):
+        yes_no_tuple = self.get_yes_no_tuple()
+        help_text = self.current_language_dict["help_text"]
+        return yes_or_no_question(question_text, yes_no_tuple, help_text)
+
+    def try_again_question(self):
+        question_text = self.current_language_dict["try_again_question"]
+        return self.yes_no_question(question_text)
+
     def choose_language(self):
-        choose_prompt_en = "Choose language (available:"
-        choose_prompt_fi = "Valitse kieli (vaihtoehdot:"
+        choose_prompt = self.current_language_dict["choose_language"].replace("%1%", ", ".join(self.config.keys()))
         while True:
-            language_answer = input(f"{choose_prompt_en} {", ".join(self.config.keys())}): ")
+            language_answer = input(f"{choose_prompt} ")
             if language_answer.lower() in self.config.keys():
                 self.language = language_answer
                 return
@@ -529,20 +557,24 @@ class Krypto:
                 return
             not_confirmed = True
             while not_confirmed:
-                add_new_language = yes_or_no_question(f"Do you want to add a new language, {language_answer}? [NOTE: This has not been implemented yet]")
+                question_text = self.current_language_dict["add_new_language_question"].replace("%1%", language_answer)
+                add_new_language = self.yes_no_question(question_text)
+                # add_new_language = yes_or_no_question(f"Do you want to add a new language, {language_answer}? [NOTE: This has not been implemented yet]")
                 # yes_or_no = input(f"Do you want to add a new language, {language_answer}? (Y/N) ")
                 if add_new_language:
                     self.language = language_answer
                     return
                 if not add_new_language:
                     # try_again = input("Do you want to try again? (Y/N) ")
-                    try_again = yes_or_no_question("Do you want to try again?")
+                    # try_again = yes_or_no_question("Do you want to try again?")
+                    try_again = self.try_again_question()
                     if not try_again:
                         return
                     
     def choose_codeword_path(self):
         while True:
-            path_answer = input(f"Type the path to the csv file with codewords: ")
+            prompt_text = self.current_language_dict["codeword_path_prompt"]
+            path_answer = input(f"{prompt_text} ")
             codeword_path = get_codeword_path(path_answer)
             if codeword_path is not None:
                 return codeword_path
@@ -552,9 +584,10 @@ class Krypto:
             # codeword_path = Path(path_answer + ".csv")
             # if codeword_path.exists():
             #     return codeword_path
-            try_again = yes_or_no_question(f"File {path_answer} does not exist. Do you want to try again?")
+            question_text = self.current_language_dict["file_not_found_try_again"].replace("%1%", path_answer)
+            try_again = self.yes_no_question(question_text)
             if not try_again:
-                return
+                exit()
             
     def get_command_line_arguments(self):
         language = None
