@@ -759,7 +759,16 @@ class Krypto:
                 ordinal = i + 1
             print(f"{ordinal}\t {choice[0]}")
         print()
-        choice_num = int(input())
+        choice_num = None
+        while choice_num is None:
+            choice_input = input()
+            try:
+                choice_num = int(choice_input)
+                if choice_num >= 0 and choice_num < len(choices):
+                    break
+            except ValueError:
+                if choice_input.lower() == "q":
+                    exit()
         print()
         if choice_num == 0:
             ans = yes_or_no_question("Are you sure you want to quit?")
