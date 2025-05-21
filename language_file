@@ -2,11 +2,11 @@ key;fi;en;
 yes;kyllä;yes;
 no;ei;no;
 help_text;Ole hyvä ja vastaa K tai E;Please answer Y or N for yes or no.;
-startup_time;Alustaviin toimiin kulunut aika: %1% sekuntia;Time taken to startup: %1% seconds;
+startup_time_text;Alustaviin toimiin kulunut aika: %1% sekuntia;Time taken to startup: %1% seconds;
 language;Kieli: %1%;Language: %1%;
 codewords_in_file;%1% kryptosanaa tiedostossa %2%;%1% codewords in the file %2%;
 words_in_file;%1% sanaa tiedostossa %2%;%1% words in the file %2%;
-comments;Krypton lisätietoja:;Comments:;
+comments;Krypton lisätietoja:;Comments about codeword puzzle:;
 choose_action;Valitse seuraavista:;Choose an action:;
 set_number_letter;Anna numerolle kirjainarvo;Set a number-letter correspondence in the substitution table;
 set_codeword_word;Arvaa kryptosana;Set a codeword as word;
@@ -24,3 +24,6 @@ add_new_language_question;Haluatko lisätä uuden kielen, %1%? [HUOM: kielen lis
 try_again_question;Haluatko yrittää uudelleen?;Do you want to try again?;
 codeword_path_prompt;Kirjoita kryptosanat sisältävän csv-tiedoston polku:;Type the path to the csv file with codewords:;
 file_not_found_try_again;Tiedostoa %1% ei lödy. Haluatko yrittää uudelleen?;File %1% does not exist. Do you want to try again?;
+number_prompt;Numero (tai numerot pilkuilla erotettuina): ;Number (or numbers separated by commas): ;
+letter_prompt;Kirjain (tai kirjaimet pilkuilla erotettuina);Letter (or letters separated by commas): ;
+

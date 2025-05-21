@@ -546,12 +546,17 @@ class Krypto:
         question_text = self.current_language_dict["try_again_question"]
         return self.yes_no_question(question_text)
 
+    def set_language(self, language):
+        self.language = language
+        self.current_language_dict = self.language_dict[language]
+
     def choose_language(self):
         choose_prompt = self.current_language_dict["choose_language"].replace("%1%", ", ".join(self.config.keys()))
         while True:
             language_answer = input(f"{choose_prompt} ")
             if language_answer.lower() in self.config.keys():
-                self.language = language_answer
+                # self.language = language_answer
+                self.set_language(language_answer)
                 return
             if not language_answer and self.language:
                 return
@@ -562,7 +567,8 @@ class Krypto:
                 # add_new_language = yes_or_no_question(f"Do you want to add a new language, {language_answer}? [NOTE: This has not been implemented yet]")
                 # yes_or_no = input(f"Do you want to add a new language, {language_answer}? (Y/N) ")
                 if add_new_language:
-                    self.language = language_answer
+                    # self.language = language_answer
+                    self.set_language(language_answer)
                     return
                 if not add_new_language:
                     # try_again = input("Do you want to try again? (Y/N) ")
@@ -603,13 +609,16 @@ class Krypto:
 
 
     def initialize_puzzle(self, codeword_path, wordlist_path=None):
+        self.codeword_path = codeword_path
         comments, codewords = get_codewords(codeword_path)
         # config = read_config(config_path)[language_tag.lower()]
         alphabet = self.config[self.language][self.ALPHABET_KEY]
         if wordlist_path is None:
-            wordlist = get_wordlist(self.config[self.language][self.WORDLIST_PATH_KEY])
+            self.wordlist_path = self.config[self.language][self.WORDLIST_PATH_KEY]
+            wordlist = get_wordlist(self.wordlist_path)
         else:
             wordlist = get_wordlist(wordlist_path)
+        # print(self.language, self.wordlist_path)
         wordlist = [word for word in wordlist if are_letters_in_alphabet(word, alphabet)]
         self.puzzle = CodewordPuzzle(codewords, wordlist, alphabet, comments)
 
@@ -628,8 +637,10 @@ class Krypto:
             "invalid letter": 2,
             "double letter": 3 
         }
-        num_input = input("Number (or numbers separated by commas): ")
-        char = input("Letter (or letters separated by commas): ")
+        num_prompt = self.current_language_dict["number_prompt"]
+        num_input = input(num_prompt)
+        char_prompt = self.current_language_dict["letter_prompt"]
+        char = input(char_prompt)
         try:
             num = int(num_input)
             nums = [num]
@@ -732,6 +743,22 @@ class Krypto:
             values.append(char)
         second_line = " | ".join(values)
         print(second_line)
+
+    def print_initial_info(self):
+        language_line = self.current_language_dict["language"].replace("%1%", self.config[self.language]["name"])
+        print(language_line)
+        # print(f"Language: {self.config[self.language]["name"]}")
+        codewords_line = self.current_language_dict["codewords_in_file"].replace("%1%", str(len(self.puzzle.codewords))).replace("%2%", str(self.codeword_path))
+        print(codewords_line)
+        # print(f"{len(self.puzzle.codewords)} codewords")
+        words_line = self.current_language_dict["words_in_file"].replace("%1%", str(len(self.puzzle.wordlist))).replace("%2%", str(self.wordlist_path))
+        print(words_line)
+        # print(f"{len(self.puzzle.wordlist)} words")
+        if self.puzzle.comments:
+            comments_line = self.current_language_dict["comments"]
+            print(comments_line)
+            for comment in self.puzzle.comments:
+                print(f"{comment}")
     
     def print_missing_chars(self):
         print("Letters yet to be included in substitution table:")
@@ -820,11 +847,12 @@ class Krypto:
 
 
 def main_krypto():
-    start_time_first = time.time()
+    # start_time_first = time.time()
     krypto = Krypto()
     language, codeword_path = krypto.get_command_line_arguments()
     if language:
-        krypto.language = language
+        # krypto.language = language
+        krypto.set_language(language)
     
     if language and codeword_path:
         krypto.initialize_puzzle(codeword_path)
@@ -835,16 +863,19 @@ def main_krypto():
     else:
         krypto.input_data_and_initialize_puzzle()
     
-    end_time_startup = time.time()
-    print(f"\nTime taken to startup: {round(end_time_startup - start_time_first, 3)} seconds.\n")
+    # end_time_startup = time.time()
+    # startup_time_text = krypto.current_language_dict["startup_time_text"].replace("%1%", round(end_time_startup - start_time_first, 3))
+    # print(f"\nTime taken to startup: {round(end_time_startup - start_time_first, 3)} seconds.\n")
+    # print(f"{startup_time_text}")
 
-    print(f"Language: {krypto.config[krypto.language]["name"]}")
-    print(f"{len(krypto.puzzle.codewords)} codewords")
-    print(f"{len(krypto.puzzle.wordlist)} words")
-    if krypto.puzzle.comments:
-        print("Comments about codeword puzzle:")
-        for comment in krypto.puzzle.comments:
-            print(f"{comment}")
+    krypto.print_initial_info()
+    # print(f"Language: {krypto.config[krypto.language]["name"]}")
+    # print(f"{len(krypto.puzzle.codewords)} codewords")
+    # print(f"{len(krypto.puzzle.wordlist)} words")
+    # if krypto.puzzle.comments:
+    #     print("Comments about codeword puzzle:")
+    #     for comment in krypto.puzzle.comments:
+    #         print(f"{comment}")
     # print()
     # krypto.print_substitution_dict()
 
