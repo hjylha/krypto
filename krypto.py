@@ -631,6 +631,7 @@ class Krypto:
         word = input("Word: ").lower()
         if not does_word_match(word, codeword):
             print(f"{word} and {codeword} do not match")
+            return
         if word in self.puzzle.matched_words_all[codeword]:
             print(f"{word} is in wordlist")
         else:
@@ -652,8 +653,8 @@ class Krypto:
         for codeword_pair, word_pair in unique_pairs:
             codeword1, codeword2 = codeword_pair
             word1, word2 = word_pair
-            index1 = self.puzzle.codewords.index(codeword1)
-            index2 = self.puzzle.codewords.index(codeword2)
+            index1 = self.puzzle.codewords.index(codeword1) + 1
+            index2 = self.puzzle.codewords.index(codeword2) + 1
             codeword1_str = ','.join([str(num) for num in codeword1])
             codeword2_str = ','.join([str(num) for num in codeword2])
             part1 = f"{add_whitespace(str(index1), 4)} {add_whitespace(codeword1_str, max_length)}"
