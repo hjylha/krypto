@@ -223,6 +223,13 @@ def codeword_as_str(codeword):
     return ",".join([str(num) for num in codeword])
 
 
+def mass_replace(word, *replacements):
+    final_word = word
+    for i, text in enumerate(replacements):
+        final_word = final_word.replace(f"%{i + 1}%", str(text))
+    return final_word
+
+
 class CodewordPuzzle:
 
     def get_nums_in_codewords(self):
@@ -417,8 +424,9 @@ class CodewordPuzzle:
 
     def start_matching_words(self, minimum_matches_wanted):
         for codeword_pair, word_pair in self.find_pairs():
-            print("Trying with pair:")
-            print(codeword_pair, word_pair)
+            # TODO: is this information useful?
+            # print("Trying with pair:")
+            # print(codeword_pair, word_pair)
             substitution_tuple = get_substitution_tuple(codeword_pair, word_pair)
             for num, char in substitution_tuple:
                 self.add_to_substitution_dict(num, char)
@@ -551,7 +559,7 @@ class Krypto:
         self.current_language_dict = self.language_dict[language]
 
     def choose_language(self):
-        choose_prompt = self.current_language_dict["choose_language"].replace("%1%", ", ".join(self.config.keys()))
+        choose_prompt = mass_replace(self.current_language_dict["choose_language"], ", ".join(self.config.keys()))
         while True:
             language_answer = input(f"{choose_prompt} ")
             if language_answer.lower() in self.config.keys():
@@ -562,16 +570,13 @@ class Krypto:
                 return
             not_confirmed = True
             while not_confirmed:
-                question_text = self.current_language_dict["add_new_language_question"].replace("%1%", language_answer)
+                question_text = mass_replace(self.current_language_dict["add_new_language_question"], language_answer)
                 add_new_language = self.yes_no_question(question_text)
                 # add_new_language = yes_or_no_question(f"Do you want to add a new language, {language_answer}? [NOTE: This has not been implemented yet]")
-                # yes_or_no = input(f"Do you want to add a new language, {language_answer}? (Y/N) ")
                 if add_new_language:
-                    # self.language = language_answer
                     self.set_language(language_answer)
                     return
                 if not add_new_language:
-                    # try_again = input("Do you want to try again? (Y/N) ")
                     # try_again = yes_or_no_question("Do you want to try again?")
                     try_again = self.try_again_question()
                     if not try_again:
@@ -584,13 +589,7 @@ class Krypto:
             codeword_path = get_codeword_path(path_answer)
             if codeword_path is not None:
                 return codeword_path
-            # codeword_path = Path(path_answer)
-            # if codeword_path.exists():
-            #     return codeword_path
-            # codeword_path = Path(path_answer + ".csv")
-            # if codeword_path.exists():
-            #     return codeword_path
-            question_text = self.current_language_dict["file_not_found_try_again"].replace("%1%", path_answer)
+            question_text = mass_replace(self.current_language_dict["file_not_found_try_again"], path_answer)
             try_again = self.yes_no_question(question_text)
             if not try_again:
                 exit()
@@ -653,40 +652,60 @@ class Krypto:
             if not issues:
                 continue
             if issue == 1:
-                print(f"{num} is not a valid number")
+                text = mass_replace(self.current_language_dict["invalid_number_text"], num)
+                print(text)
+                # print(f"{num} is not a valid number")
                 continue
             if issue == 2:
-                print(f"{char} not in alphabet ({self.puzzle.alphabet})")
+                text = mass_replace(self.current_language_dict["not_in_alphabet_text"], char, self.puzzle.alphabet)
+                print(text)
+                # print(f"{char} not in alphabet ({self.puzzle.alphabet})")
                 continue
             if issue == 3:
                 num_already = self.puzzle.find_char_from_substitution_dict(char)
-                print(f"{char} already in table ({num_already})")
+                text = mass_replace(self.current_language_dict["already_in_table_text"], char, num_already)
+                print(text)
+                # print(f"{char} already in table ({num_already})")
 
     def set_codeword_as_word(self):
-        codeword_input = input("Codeword (index number or numbers separated by commas): ")
+        codeword_prompt = self.current_language_dict["codeword_prompt"]
+        # codeword_input = input("Codeword (index number or numbers separated by commas): ")
+        codeword_input = input(codeword_prompt)
         try:
             codeword = self.puzzle.find_codeword(codeword_input)
         except ValueError:
-            print("Cancelled")
+            print(self.current_language_dict["cancelled"])
+            # print("Cancelled")
             return
         if not codeword:
-            print(f"{codeword_input} is not a valid codeword")
+            invalid_codeword_text = mass_replace(self.current_language_dict["invalid_codeword_text"], codeword_input)
+            print(invalid_codeword_text)
+            # print(f"{codeword_input} is not a valid codeword")
             return
-        word = input("Word: ").lower()
+        word_prompt = self.current_language_dict["word_prompt"]
+        word = input(word_prompt).lower()
         if not does_word_match(word, codeword):
-            print(f"{word} and {codeword} do not match")
+            no_match_text = mass_replace(self.current_language_dict["no_match_text"], word, codeword)
+            print(no_match_text)
+            # print(f"{word} and {codeword} do not match")
             return
         if word in self.puzzle.matched_words_all[codeword]:
-            print(f"{word} is in wordlist")
+            word_in_wordlist_text = mass_replace(self.current_language_dict["word_in_wordlist_text"], word)
+            print(word_in_wordlist_text)
+            # print(f"{word} is in wordlist")
         else:
-            print(f"{word} is NOT in wordlist")
+            word_not_in_wordlist_text = mass_replace(self.current_language_dict["word_not_in_wordlist_text"], word)
+            print(word_not_in_wordlist_text)
+            # print(f"{word} is NOT in wordlist")
         for num, char in zip(codeword, [c for c in word]):
             self.puzzle.add_to_substitution_dict(num, char, override=True)
         self.puzzle.set_matched_words()
 
     def find_unique_pairs(self):
         unique_pairs = self.puzzle.find_all_unique_pairs()
-        print(f"Found {len(unique_pairs)} unique pairs:")
+        unique_pairs_found_text = mass_replace(self.current_language_dict["unique_pairs_found_text"], len(unique_pairs))
+        print(unique_pairs_found_text)
+        # print(f"Found {len(unique_pairs)} unique pairs:")
         max_length = 0
         for codeword_pair, _ in unique_pairs:
             codeword1, codeword2 = codeword_pair
@@ -703,8 +722,8 @@ class Krypto:
             codeword2_str = ','.join([str(num) for num in codeword2])
             part1 = f"{add_whitespace(str(index1), 4)} {add_whitespace(codeword1_str, max_length)}"
             part2 = f"{add_whitespace(str(index2), 4)} {add_whitespace(codeword2_str, max_length)}"
-            part3 = f"{add_whitespace(word1, max_length)}"
-            part4 = f"{add_whitespace(word2, max_length)}"
+            part3 = f"{add_whitespace(word1.upper(), max_length)}"
+            part4 = f"{add_whitespace(word2.upper(), max_length)}"
             print(f"{part1}  {part2}    {part3}  {part4}")
         return unique_pairs
 
@@ -717,9 +736,19 @@ class Krypto:
         start_time = time.time()
         solved_codewords, substitution_tuple = self.puzzle.start_matching_words(minimum_matches_wanted)
         end_time = time.time()
-        print(f"Time to reach at least {minimum_matches_wanted} words: {round(end_time - start_time, 3)} seconds.")
-        print(f"{len(solved_codewords)} out of {len(self.puzzle.codewords)} words found.")
-        print(f"{len(substitution_tuple)} out of {len(self.puzzle.substitution_dict)} numbers deciphered.")
+
+        solving_time_text = mass_replace(self.current_language_dict["solving_time_text"], minimum_matches_wanted, round(end_time - start_time, 3))
+        print(solving_time_text)
+        # print(f"Time to reach at least {minimum_matches_wanted} words: {round(end_time - start_time, 3)} seconds.")
+
+        found_codewords_text = mass_replace(self.current_language_dict["found_codewords_text"], len(solved_codewords), len(self.puzzle.codewords))
+        print(found_codewords_text)
+        # print(f"{len(solved_codewords)} out of {len(self.puzzle.codewords)} words found.")
+
+        substitution_table_decipher_text = mass_replace(self.current_language_dict["substitution_table_decipher_text"], len(substitution_tuple), len(self.puzzle.substitution_dict))
+        print(substitution_table_decipher_text)
+        # print(f"{len(substitution_tuple)} out of {len(self.puzzle.substitution_dict)} numbers deciphered.")
+
         for num, char in substitution_tuple:
             # self.puzzle.substitution_dict[num] = char
             self.puzzle.add_to_substitution_dict(num, char)
@@ -736,22 +765,18 @@ class Krypto:
             if not char:
                 char = " "
             char = add_whitespace(char, len(str(num)))
-            # if char := self.puzzle.substitution_dict[num]:
-            #     values.append(char.upper())
-            # else:
-            #     values.append(" ")
             values.append(char)
         second_line = " | ".join(values)
         print(second_line)
 
     def print_initial_info(self):
-        language_line = self.current_language_dict["language"].replace("%1%", self.config[self.language]["name"])
+        language_line = mass_replace(self.current_language_dict["language"], self.config[self.language]["name"])
         print(language_line)
         # print(f"Language: {self.config[self.language]["name"]}")
-        codewords_line = self.current_language_dict["codewords_in_file"].replace("%1%", str(len(self.puzzle.codewords))).replace("%2%", str(self.codeword_path))
+        codewords_line = mass_replace(self.current_language_dict["codewords_in_file"], len(self.puzzle.codewords), self.codeword_path)
         print(codewords_line)
         # print(f"{len(self.puzzle.codewords)} codewords")
-        words_line = self.current_language_dict["words_in_file"].replace("%1%", str(len(self.puzzle.wordlist))).replace("%2%", str(self.wordlist_path))
+        words_line = mass_replace(self.current_language_dict["words_in_file"], len(self.puzzle.wordlist), self.wordlist_path)
         print(words_line)
         # print(f"{len(self.puzzle.wordlist)} words")
         if self.puzzle.comments:
@@ -761,7 +786,9 @@ class Krypto:
                 print(f"{comment}")
     
     def print_missing_chars(self):
-        print("Letters yet to be included in substitution table:")
+        missing_chars_text = self.current_language_dict["missing_letters_text"]
+        # print("Letters yet to be included in substitution table:")
+        print(missing_chars_text)
         for char in self.puzzle.alphabet:
             if char not in self.puzzle.substitution_dict.values():
                 print(f"{char.upper()}", end="  ")
@@ -785,12 +812,18 @@ class Krypto:
             print(f"{add_whitespace(str(i + 1), 4)} {add_whitespace(word, num_of_chars1).upper()} \t {add_whitespace(codeword_str, num_of_chars2)} \t {len(self.puzzle.matched_words[codeword])} matching words")
     
     def show_matching_words(self):
-        codeword_input = input("Codeword (index number or numbers separated by commas): ")
+        codeword_prompt = self.current_language_dict["codeword_prompt"]
+        codeword_input = input(codeword_prompt)
+        # codeword_input = input("Codeword (index number or numbers separated by commas): ")
         codeword = self.puzzle.find_codeword(codeword_input)
         if codeword is None:
-            print(f"Codeword corresponding to {codeword_input} not found.")
+            invalid_codeword_text = mass_replace(self.current_language_dict["invalid_codeword_text"], codeword_input)
+            print(invalid_codeword_text)
+            # print(f"Codeword corresponding to {codeword_input} not found.")
             return
-        print(f"{len(self.puzzle.matched_words[codeword])} words match {codeword}:")
+        words_matching_codeword_text = mass_replace(self.current_language_dict["words_matching_codeword_text"], len(self.puzzle.matched_words[codeword], codeword))
+        print(words_matching_codeword_text)
+        # print(f"{len(self.puzzle.matched_words[codeword])} words match {codeword}:")
         for word in self.puzzle.matched_words[codeword]:
             print(word.upper())
         
@@ -800,18 +833,19 @@ class Krypto:
         self.print_substitution_dict()
         print()
         choices = [
-            ("Set a number-letter correspondence in the substitution table", self.add_to_substitution_dict),
-            ("Set a codeword as word", self.set_codeword_as_word),
-            ("Show missing letters", self.print_missing_chars),
-            ("Show codeword puzzle progress", self.print_codeword_progress),
-            ("Show matching words for codeword", self.show_matching_words),
-            ("Find unique pairs", self.find_unique_pairs),
-            ("Try to solve the codeword puzzle", self.try_to_solve_puzzle),
-            ("Restart (Clear the substitution table)", self.puzzle.clear_substitution_dict),
-            ("Clear screen", clear_screen),
-            ("Exit", exit)
+            (self.current_language_dict["set_number_letter"], self.add_to_substitution_dict),
+            (self.current_language_dict["set_codeword_word"], self.set_codeword_as_word),
+            (self.current_language_dict["missing_letters"], self.print_missing_chars),
+            (self.current_language_dict["show_progress"], self.print_codeword_progress),
+            (self.current_language_dict["show_matching_words"], self.show_matching_words),
+            (self.current_language_dict["find_unique_pairs"], self.find_unique_pairs),
+            (self.current_language_dict["solve"], self.try_to_solve_puzzle),
+            (self.current_language_dict["restart"], self.puzzle.clear_substitution_dict),
+            (self.current_language_dict["clear_screen"], clear_screen),
+            (self.current_language_dict["exit"], exit)
         ]
-        print("Choose an action:")
+        # print("Choose an action:")
+        print(self.current_language_dict["choose_action"])
         for i, choice in enumerate(choices):
             if i == len(choices) -1:
                 ordinal = 0
@@ -831,10 +865,14 @@ class Krypto:
                     exit()
         print()
         if choice_num == 0:
-            ans = yes_or_no_question("Are you sure you want to quit?")
+            ans = yes_or_no_question(self.current_language_dict["exit_confirmation"])
+            # ans = yes_or_no_question("Are you sure you want to quit?")
             if ans:
                 exit()
         return choices[choice_num - 1][1]
+
+    def change_language(self):
+        pass
 
     def add_config(self):
         pass
@@ -851,7 +889,6 @@ def main_krypto():
     krypto = Krypto()
     language, codeword_path = krypto.get_command_line_arguments()
     if language:
-        # krypto.language = language
         krypto.set_language(language)
     
     if language and codeword_path:
@@ -864,20 +901,11 @@ def main_krypto():
         krypto.input_data_and_initialize_puzzle()
     
     # end_time_startup = time.time()
-    # startup_time_text = krypto.current_language_dict["startup_time_text"].replace("%1%", round(end_time_startup - start_time_first, 3))
+    # startup_time_text = mass_replace(krypto.current_language_dict["startup_time_text"], round(end_time_startup - start_time_first, 3))
     # print(f"\nTime taken to startup: {round(end_time_startup - start_time_first, 3)} seconds.\n")
     # print(f"{startup_time_text}")
 
     krypto.print_initial_info()
-    # print(f"Language: {krypto.config[krypto.language]["name"]}")
-    # print(f"{len(krypto.puzzle.codewords)} codewords")
-    # print(f"{len(krypto.puzzle.wordlist)} words")
-    # if krypto.puzzle.comments:
-    #     print("Comments about codeword puzzle:")
-    #     for comment in krypto.puzzle.comments:
-    #         print(f"{comment}")
-    # print()
-    # krypto.print_substitution_dict()
 
     print()
 

@@ -212,3 +212,15 @@ def test_add_whitespace(word, total_length, result):
 )
 def test_codeword_as_str(codeword, written_codeword):
     assert krypto.codeword_as_str(codeword) == written_codeword
+
+
+@pytest.mark.parametrize(
+    "text, additions, result", [
+        ("he%1%o", ("ll",), "hello"),
+        ("w%1%r%2%d", ("o", "l"), "world"),
+        ("something %1% %2% strange %3%", ("NOT", "particularly", "at all"), "something NOT particularly strange at all"),
+        ("%1% me %2% others", (1, (2, 3)), "1 me (2, 3) others")
+    ]
+)
+def test_mass_replace(text, additions, result):
+    assert krypto.mass_replace(text, *additions) == result
