@@ -448,6 +448,34 @@ class CodewordPuzzle:
             matched_codewords, substitution_tuple = self.try_more_words(codewords, codeword_pair, substitution_tuple, minimum_matches_wanted)
             if len(matched_codewords) >= minimum_matches_wanted:
                 return matched_codewords, substitution_tuple
+            
+    def solve_using_unique_pairs(self):
+        unique_pairs = self.find_all_unique_pairs()
+        while unique_pairs:
+            # choose the (new) codeword-word that appears the most
+            number_of_appearances = dict()
+            for codeword_pair, word_pair in unique_pairs:
+                for codeword, word in zip(codeword_pair, word_pair):
+                    if not self.is_codeword_solved(codeword):
+                        if number_of_appearances.get((codeword, word)) is None:
+                            number_of_appearances[(codeword, word)] = 1
+                        else:
+                            number_of_appearances[(codeword, word)] += 1
+            best_choice = None
+            max_num_of_appearances = 0
+            for match, num in number_of_appearances.items():
+                if num > max_num_of_appearances:
+                    max_num_of_appearances = num
+                    best_choice = match
+            # maybe show this?
+            yield best_choice
+
+            codeword, word = best_choice
+            for num, char in zip(codeword, [c for c in word]):
+                self.add_to_substitution_dict(num, char, override=True)
+            self.set_matched_words()
+            unique_pairs = self.find_all_unique_pairs()        
+
     
     def try_to_match_more_words(self, codewords, start_index, matched_codewords, substitution_tuple, minimum_matches_wanted):
         if start_index < 1:
