@@ -246,6 +246,7 @@ class CodewordPuzzle:
             return substitution_tuple
     
     def set_matched_words(self):
+        # TODO: does not check for all letters
         for codeword, words in self.matched_words_all.items():
             matching_indices = {i: self.substitution_dict[num] for i, num in enumerate(codeword) if self.substitution_dict[num]}
             new_matched_words = []
@@ -254,6 +255,11 @@ class CodewordPuzzle:
                     new_matched_words.append(word)
             self.matched_words[codeword] = new_matched_words
 
+    def is_codeword_solved(self, codeword):
+        for num in codeword:
+            if not self.substitution_dict[num]:
+                return False
+        return True
     
     def __init__(self, codewords, wordlist, alphabet, comments):
         self.codewords = codewords
@@ -374,7 +380,11 @@ class CodewordPuzzle:
         unique_pairs = []
         codewords_to_match = sorted(self.matched_words.keys(), key=lambda c: len(self.matched_words[c]))
         for i, codeword1 in enumerate(codewords_to_match):
+            is_codeword1_solved = self.is_codeword_solved(codeword1)
             for codeword2 in codewords_to_match[i + 1:]:
+                is_codeword2_solved = self.is_codeword_solved(codeword2)
+                if is_codeword1_solved and is_codeword2_solved:
+                    continue
                 matched_pairs = self.match_two_codewords(codeword1, codeword2, 1)
                 if matched_pairs:
                     unique_pairs.append(((codeword1, codeword2), matched_pairs[0]))
