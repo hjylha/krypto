@@ -832,7 +832,7 @@ class Krypto:
             print(invalid_codeword_text)
             # print(f"Codeword corresponding to {codeword_input} not found.")
             return
-        words_matching_codeword_text = mass_replace(self.current_language_dict["words_matching_codeword_text"], len(self.puzzle.matched_words[codeword], codeword))
+        words_matching_codeword_text = mass_replace(self.current_language_dict["words_matching_codeword_text"], len(self.puzzle.matched_words[codeword]), codeword)
         print(words_matching_codeword_text)
         # print(f"{len(self.puzzle.matched_words[codeword])} words match {codeword}:")
         for word in self.puzzle.matched_words[codeword]:
