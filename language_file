@@ -42,3 +42,4 @@ solving_time_text;Kulunut aika ainakin %1%:n sanan löytämiseen: %2% sekuntia;T
 found_codewords_text;%1% / %2% sanaa löydetty;%1% out of %2% words found;
 substitution_table_decipher_text;%1% / %2% numero-kirjain-paria kiinnitetty;%1% out of %2% numbers deciphered;
 words_matching_codeword_text;%1% sanaa vastaa kryptosanaa %2%:;%1% words match %2%:;
+matching_words_text;%1% sopivaa sanaa;%1% matching words;

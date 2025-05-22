@@ -532,10 +532,14 @@ class Krypto:
         self.language_dict = get_language_dict(language_file_path)
         default_language, config = read_config(config_path)
         self.config = config
+        self.default_language = default_language
         if language is None:
             language = default_language
         self.language = language
-        self.current_language_dict = self.language_dict[self.language]
+        try:
+            self.current_language_dict = self.language_dict[self.language]
+        except KeyError:
+            self.current_language_dict = self.language_dict[default_language]
         if wordlist_path is None:
             wordlist_path = self.config[self.language][self.WORDLIST_PATH_KEY]
         self.wordlist_path = wordlist_path
@@ -556,7 +560,10 @@ class Krypto:
 
     def set_language(self, language):
         self.language = language
-        self.current_language_dict = self.language_dict[language]
+        try:
+            self.current_language_dict = self.language_dict[language]
+        except KeyError:
+            self.current_language_dict = self.language_dict[self.default_language]
 
     def choose_language(self):
         choose_prompt = mass_replace(self.current_language_dict["choose_language"], ", ".join(self.config.keys()))
@@ -809,7 +816,11 @@ class Krypto:
             i = self.puzzle.codewords.index(codeword)
             word = self.puzzle.get_decrypted_codeword(codeword, not_found_symbol)
             codeword_str = ','.join([str(num) for num in codeword])
-            print(f"{add_whitespace(str(i + 1), 4)} {add_whitespace(word, num_of_chars1).upper()} \t {add_whitespace(codeword_str, num_of_chars2)} \t {len(self.puzzle.matched_words[codeword])} matching words")
+            part1 = add_whitespace(str(i + 1), 4)
+            part2 = add_whitespace(word, num_of_chars1).upper()
+            part3 = add_whitespace(codeword_str, num_of_chars2)
+            part4 = mass_replace(self.current_language_dict["matching_words_text"], len(self.puzzle.matched_words[codeword]))
+            print(f"{part1} {part2} \t {part3} \t {part4}")
     
     def show_matching_words(self):
         codeword_prompt = self.current_language_dict["codeword_prompt"]
