@@ -246,13 +246,15 @@ class CodewordPuzzle:
             return substitution_tuple
     
     def set_matched_words(self):
-        # TODO: does not check for all letters
+        substitution_tuple = self.get_substitution_tuple()
         for codeword, words in self.matched_words_all.items():
-            matching_indices = {i: self.substitution_dict[num] for i, num in enumerate(codeword) if self.substitution_dict[num]}
+            # matching_indices = {i: self.substitution_dict[num] for i, num in enumerate(codeword) if self.substitution_dict[num]}
             new_matched_words = []
             for word in words:
-                if does_word_match_to_fixed_index_values(word, matching_indices):
+                if does_word_match_to_substitution_tuple(word, codeword, substitution_tuple):
                     new_matched_words.append(word)
+                # if does_word_match_to_fixed_index_values(word, matching_indices):
+                #     new_matched_words.append(word)
             self.matched_words[codeword] = new_matched_words
 
     def is_codeword_solved(self, codeword):
