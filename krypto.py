@@ -816,6 +816,7 @@ class Krypto:
         max_num_size = len(str(len(self.puzzle.codewords)))
         for codeword, word in self.puzzle.try_to_solve_using_unique_pairs():
             found_words += 1
+            codeword_str = codeword_as_str(codeword)
             part1 = f"{add_whitespace(str(self.puzzle.codewords.index(codeword) + 1), 4)} {add_whitespace(codeword_str, max_codeword_length)}"
             part2 = f"{add_whitespace(word.upper(), max_word_length)}"
             print(f"{add_whitespace(str(found_words), max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
