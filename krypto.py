@@ -330,7 +330,7 @@ class CodewordPuzzle:
             if codeword in self.codewords:
                 return codeword
     
-    def get_decrypted_codeword(self, codeword, not_found_symbol="?"):
+    def get_decrypted_codeword(self, codeword, not_found_symbol="_"):
         chars = []
         for num in codeword:
             char = self.substitution_dict[num]
@@ -449,7 +449,7 @@ class CodewordPuzzle:
             if len(matched_codewords) >= minimum_matches_wanted:
                 return matched_codewords, substitution_tuple
             
-    def solve_using_unique_pairs(self):
+    def try_to_solve_using_unique_pairs(self):
         unique_pairs = self.find_all_unique_pairs()
         while unique_pairs:
             # choose the (new) codeword-word that appears the most
@@ -474,7 +474,7 @@ class CodewordPuzzle:
             for num, char in zip(codeword, [c for c in word]):
                 self.add_to_substitution_dict(num, char, override=True)
             self.set_matched_words()
-            unique_pairs = self.find_all_unique_pairs()        
+            unique_pairs = self.find_all_unique_pairs()
 
     
     def try_to_match_more_words(self, codewords, start_index, matched_codewords, substitution_tuple, minimum_matches_wanted):
@@ -756,8 +756,8 @@ class Krypto:
         max_length = 0
         for codeword_pair, _ in unique_pairs:
             codeword1, codeword2 = codeword_pair
-            codeword1_str = ','.join([str(num) for num in codeword1])
-            codeword2_str = ','.join([str(num) for num in codeword2])
+            codeword1_str = codeword_as_str(codeword1)
+            codeword2_str = codeword_as_str(codeword2)
             if (new_max := max(len(codeword1_str), len(codeword2_str))) > max_length:
                 max_length = new_max
         for codeword_pair, word_pair in unique_pairs:
@@ -800,6 +800,42 @@ class Krypto:
             # self.puzzle.substitution_dict[num] = char
             self.puzzle.add_to_substitution_dict(num, char)
         return solved_codewords, substitution_tuple
+    
+    def try_to_solve_puzzle_with_steps(self):
+        max_codeword_length = 0
+        max_word_length = 0
+        for codeword in self.puzzle.codewords:
+            if len(codeword) > max_word_length:
+                max_word_length = len(codeword)
+            codeword_str = codeword_as_str(codeword)
+            if len(codeword_str) > max_codeword_length:
+                max_codeword_length = len(codeword_str)
+        
+        start_time = time.time()
+        found_words = 0
+        max_num_size = len(str(len(self.puzzle.codewords)))
+        for codeword, word in self.puzzle.try_to_solve_using_unique_pairs():
+            found_words += 1
+            part1 = f"{add_whitespace(str(self.puzzle.codewords.index(codeword) + 1), 4)} {add_whitespace(codeword_str, max_codeword_length)}"
+            part2 = f"{add_whitespace(word.upper(), max_word_length)}"
+            print(f"{add_whitespace(str(found_words), max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
+        end_time = time.time()
+
+        print()
+        solving_time_text = mass_replace(self.current_language_dict["solving_time_with_steps_text"], round(end_time - start_time, 3))
+        print(solving_time_text)
+        
+        num_of_found_words = 0
+        for codeword in self.puzzle.codewords:
+            word = self.puzzle.get_decrypted_codeword(codeword)
+            if word in self.puzzle.matched_words_all[codeword]:
+                num_of_found_words += 1
+        found_codewords_text = mass_replace(self.current_language_dict["found_codewords_text"], num_of_found_words, len(self.puzzle.codewords))
+        print(found_codewords_text)
+
+        num_of_solved_numbers = len([value for value in self.puzzle.substitution_dict.values() if value])
+        substitution_table_decipher_text = mass_replace(self.current_language_dict["substitution_table_decipher_text"], num_of_solved_numbers, len(self.puzzle.substitution_dict))
+        print(substitution_table_decipher_text)
     
     def print_substitution_dict(self):
         nums = sorted(self.puzzle.substitution_dict.keys())
@@ -890,7 +926,8 @@ class Krypto:
             (self.current_language_dict["show_progress"], self.print_codeword_progress),
             (self.current_language_dict["show_matching_words"], self.show_matching_words),
             (self.current_language_dict["find_unique_pairs"], self.find_unique_pairs),
-            (self.current_language_dict["solve"], self.try_to_solve_puzzle),
+            # (self.current_language_dict["solve"], self.try_to_solve_puzzle),
+            (self.current_language_dict["solve_with_steps"], self.try_to_solve_puzzle_with_steps),
             (self.current_language_dict["restart"], self.puzzle.clear_substitution_dict),
             (self.current_language_dict["clear_screen"], clear_screen),
             (self.current_language_dict["exit"], exit)
