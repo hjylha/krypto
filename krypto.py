@@ -103,6 +103,8 @@ def are_letters_in_alphabet(word, alphabet):
 
 
 def find_correspondence(num_or_char, correspondence_tuple):
+    if correspondence_tuple is None:
+        return
     for num, char in correspondence_tuple:
         if num_or_char == num:
             return char
@@ -174,7 +176,10 @@ def does_word_match(word, codeword):
 
 
 def does_word_match_to_substitution_tuple(word, codeword, substitution_tuple):
-    letters_in_tuple = [char for _, char in substitution_tuple]
+    try:
+        letters_in_tuple = [char for _, char in substitution_tuple]
+    except TypeError:
+        letters_in_tuple = []
     for char, num in zip(word, codeword):
         expected_char = find_correspondence(num, substitution_tuple)
         if expected_char is None and char in letters_in_tuple:
