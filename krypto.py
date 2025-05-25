@@ -920,6 +920,32 @@ class Krypto:
             part4 = mass_replace(self.current_language_dict["matching_words_text"], len(self.puzzle.matched_words[codeword]))
             print(f"{part1} {part2} \t {part3} \t {part4}")
     
+    def choose_progress_to_show(self, not_found_symbol="_"):
+        # default is the first, shown as 1
+        default_option = 1
+        options = [
+            self.current_language_dict["show_unsolved_text"],
+            self.current_language_dict["show_all_text"],
+            self.current_language_dict["show_solved_text"]
+        ]
+        print(mass_replace(self.current_language_dict["choose_progress_shown_text"], default_option))
+        for i, option in enumerate(options):
+            ordinal = i + 1
+            print(f"{add_whitespace(str(ordinal), 3)} {option}")
+        try:
+            choice = int(input())
+        except ValueError:
+            choice = default_option
+        if choice == 2:
+            self.print_codeword_progress(codewords=None, not_found_symbol=not_found_symbol)
+            return
+        if choice == 3:
+            solved_codewords = [codeword for codeword in self.puzzle.codewords if self.puzzle.is_codeword_solved(codeword)]
+            self.print_codeword_progress(solved_codewords, not_found_symbol=not_found_symbol)
+            return
+        unsolved_codewords = [codeword for codeword in self.puzzle.codewords if not self.puzzle.is_codeword_solved(codeword)]
+        self.print_codeword_progress(unsolved_codewords, not_found_symbol=not_found_symbol)
+    
     def show_matching_words(self):
         codeword_prompt = self.current_language_dict["codeword_prompt"]
         codeword_input = input(codeword_prompt)
@@ -945,7 +971,8 @@ class Krypto:
             (self.current_language_dict["set_number_letter"], self.add_to_substitution_dict),
             (self.current_language_dict["set_codeword_word"], self.set_codeword_as_word),
             (self.current_language_dict["missing_letters"], self.print_missing_chars),
-            (self.current_language_dict["show_progress"], self.print_codeword_progress),
+            # (self.current_language_dict["show_progress"], self.print_codeword_progress),
+            (self.current_language_dict["show_progress"], self.choose_progress_to_show),
             (self.current_language_dict["show_matching_words"], self.show_matching_words),
             (self.current_language_dict["find_unique_pairs"], self.find_unique_pairs),
             # (self.current_language_dict["solve"], self.try_to_solve_puzzle),
