@@ -335,6 +335,17 @@ class CodewordPuzzle:
             if codeword in self.codewords:
                 return codeword
     
+    def find_codeword_with_least_matches(self):
+        the_codeword = None
+        least_matches = len(self.wordlist)
+        for codeword, words in self.matched_words.items():
+            if self.is_codeword_solved(codeword):
+                continue
+            if words and len(words) < least_matches:
+                the_codeword = codeword
+                least_matches = len(words)
+        return the_codeword
+    
     def get_decrypted_codeword(self, codeword, not_found_symbol="_"):
         chars = []
         for num in codeword:
@@ -950,13 +961,17 @@ class Krypto:
         codeword_prompt = self.current_language_dict["codeword_prompt"]
         codeword_input = input(codeword_prompt)
         # codeword_input = input("Codeword (index number or numbers separated by commas): ")
-        codeword = self.puzzle.find_codeword(codeword_input)
+        if codeword_input == "":
+            codeword = self.puzzle.find_codeword_with_least_matches()
+        else:
+            codeword = self.puzzle.find_codeword(codeword_input)
         if codeword is None:
             invalid_codeword_text = mass_replace(self.current_language_dict["invalid_codeword_text"], codeword_input)
             print(invalid_codeword_text)
             # print(f"Codeword corresponding to {codeword_input} not found.")
             return
-        words_matching_codeword_text = mass_replace(self.current_language_dict["words_matching_codeword_text"], len(self.puzzle.matched_words[codeword]), codeword)
+        c_index = self.puzzle.codewords.index(codeword) + 1
+        words_matching_codeword_text = mass_replace(self.current_language_dict["words_matching_codeword_text"], len(self.puzzle.matched_words[codeword]), c_index, codeword)
         print(words_matching_codeword_text)
         # print(f"{len(self.puzzle.matched_words[codeword])} words match {codeword}:")
         for word in self.puzzle.matched_words[codeword]:

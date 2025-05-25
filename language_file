@@ -43,7 +43,7 @@ solving_time_text;Kulunut aika ainakin %1%:n sanan löytämiseen: %2% sekuntia;T
 found_codewords_text;%1% / %2% sanaa ratkaistu;%1% out of %2% words solved;
 found_codewords_in_wordlist_text;%1% ratkaistua sanaa sanalistassa;%1% solved words in wordlist;
 substitution_table_decipher_text;%1% / %2% numero-kirjain-paria ratkaistu;%1% out of %2% numbers deciphered;
-words_matching_codeword_text;%1% sanaa vastaa kryptosanaa %2%:;%1% words match %2%:;
+words_matching_codeword_text;%1% sanaa vastaa kryptosanaa %2% %3%:;%1% words match %2% %3%:;
 matching_words_text;%1% sopivaa sanaa;%1% matching words;
 best_match_text;Parhaiten sopii: ;Best match: ;
 solving_time_with_steps_text;Ratkaisemiseen käytetty aika: %1% sekuntia;Time spent solving: %1% seconds;
