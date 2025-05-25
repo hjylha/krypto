@@ -47,3 +47,4 @@ words_matching_codeword_text;%1% sanaa vastaa kryptosanaa %2%:;%1% words match %
 matching_words_text;%1% sopivaa sanaa;%1% matching words;
 best_match_text;Parhaiten sopii: ;Best match: ;
 solving_time_with_steps_text;Ratkaisemiseen käytetty aika: %1% sekuntia;Time spent solving: %1% seconds;
+solved_words_note;Ratkaistuihin sanoihin on lisätty %1%;%1% denotes solved words;

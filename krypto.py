@@ -757,6 +757,9 @@ class Krypto:
         unique_pairs = self.puzzle.find_all_unique_pairs()
         unique_pairs_found_text = mass_replace(self.current_language_dict["unique_pairs_found_text"], len(unique_pairs))
         print(unique_pairs_found_text)
+        solved_char = "*"
+        solved_words_note = mass_replace(self.current_language_dict["solved_words_note"], solved_char)
+        print(solved_words_note)
         # print(f"Found {len(unique_pairs)} unique pairs:")
         max_length = 0
         for codeword_pair, _ in unique_pairs:
@@ -768,6 +771,10 @@ class Krypto:
         for codeword_pair, word_pair in unique_pairs:
             codeword1, codeword2 = codeword_pair
             word1, word2 = word_pair
+            if self.puzzle.is_codeword_solved(codeword1):
+                word1 = f"{word1}{solved_char}"
+            if self.puzzle.is_codeword_solved(codeword2):
+                word2 = f"{word2}{solved_char}"
             index1 = self.puzzle.codewords.index(codeword1) + 1
             index2 = self.puzzle.codewords.index(codeword2) + 1
             codeword1_str = ','.join([str(num) for num in codeword1])
