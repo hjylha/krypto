@@ -793,9 +793,13 @@ class Krypto:
         print(solving_time_text)
         # print(f"Time to reach at least {minimum_matches_wanted} words: {round(end_time - start_time, 3)} seconds.")
 
-        found_codewords_text = mass_replace(self.current_language_dict["found_codewords_text"], len(solved_codewords), len(self.puzzle.codewords))
+        num_of_actually_solved_codewords = len([codeword for codeword in self.puzzle.codewords if self.puzzle.is_codeword_solved(codeword)])
+        found_codewords_text = mass_replace(self.current_language_dict["found_codewords_text"], num_of_actually_solved_codewords, len(self.puzzle.codewords))
         print(found_codewords_text)
         # print(f"{len(solved_codewords)} out of {len(self.puzzle.codewords)} words found.")
+
+        found_codewords_in_wordlist_text = mass_replace(self.current_language_dict["found_codewords_in_wordlist_text"], len(solved_codewords))
+        print(found_codewords_in_wordlist_text)
 
         substitution_table_decipher_text = mass_replace(self.current_language_dict["substitution_table_decipher_text"], len(substitution_tuple), len(self.puzzle.substitution_dict))
         print(substitution_table_decipher_text)
@@ -831,13 +835,18 @@ class Krypto:
         solving_time_text = mass_replace(self.current_language_dict["solving_time_with_steps_text"], round(end_time - start_time, 3))
         print(solving_time_text)
         
+        num_of_solved_codewords = 0
         num_of_found_words = 0
         for codeword in self.puzzle.codewords:
+            if self.puzzle.is_codeword_solved(codeword):
+                num_of_solved_codewords += 1
             word = self.puzzle.get_decrypted_codeword(codeword)
             if word in self.puzzle.matched_words_all[codeword]:
                 num_of_found_words += 1
-        found_codewords_text = mass_replace(self.current_language_dict["found_codewords_text"], num_of_found_words, len(self.puzzle.codewords))
+        found_codewords_text = mass_replace(self.current_language_dict["found_codewords_text"], num_of_solved_codewords, len(self.puzzle.codewords))
         print(found_codewords_text)
+        found_codewords_in_wordlist_text = mass_replace(self.current_language_dict["found_codewords_in_wordlist_text"], num_of_found_words)
+        print(found_codewords_in_wordlist_text)
 
         num_of_solved_numbers = len([value for value in self.puzzle.substitution_dict.values() if value])
         substitution_table_decipher_text = mass_replace(self.current_language_dict["substitution_table_decipher_text"], num_of_solved_numbers, len(self.puzzle.substitution_dict))
