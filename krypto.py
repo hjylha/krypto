@@ -23,7 +23,9 @@ def read_config(config_path):
                 key, value = filtered_line.split("=")
                 key = key.strip()
                 value = value.strip()
-                if "path" in key and value:
+                if "folder_path" in key and not value:
+                    value = Path(__file__).parent
+                elif "path" in key and value:
                     value = Path(value)
                 elif not value:
                     value = None
@@ -60,7 +62,16 @@ def get_wordlist(wordlist_path):
     return wordlist
 
 
-def get_codeword_path(path_str):
+def get_codeword_path(path_str, folder_path=None):
+    if folder_path:
+        # print(f"{folder_path} exists: {folder_path.exists()}")
+        possible_codeword_path = folder_path / path_str
+        if possible_codeword_path.exists():
+            return possible_codeword_path
+        possible_codeword_path = folder_path / f"{path_str}.csv"
+        if possible_codeword_path.exists():
+            return possible_codeword_path
+        return
     possible_codeword_path = Path(path_str)
     if possible_codeword_path.exists():
         return possible_codeword_path
@@ -583,6 +594,7 @@ class Krypto:
     NAME_KEY = "name"
     ALPHABET_KEY = "alphabet"
     WORDLIST_PATH_KEY = "wordlist_path"
+    CODEWORD_FOLDER_PATH_KEY = "codeword_folder_path"
 
     def __init__(self, language_file_path=DEFAULT_LANGUAGE_FILE_PATH, config_path=DEFAULT_CONFIG_PATH, language=None, wordlist_path=None, codeword_path=None, puzzle=None):
         self.language_dict = get_language_dict(language_file_path)
@@ -649,7 +661,7 @@ class Krypto:
         while True:
             prompt_text = self.current_language_dict["codeword_path_prompt"]
             path_answer = input(f"{prompt_text} ")
-            codeword_path = get_codeword_path(path_answer)
+            codeword_path = get_codeword_path(path_answer, self.config[self.language][self.CODEWORD_FOLDER_PATH_KEY])
             if codeword_path is not None:
                 return codeword_path
             question_text = mass_replace(self.current_language_dict["file_not_found_try_again"], path_answer)
@@ -664,7 +676,7 @@ class Krypto:
             if arg in self.config.keys():
                 language = arg
                 continue
-            if possible_codeword_path := get_codeword_path(arg):
+            if possible_codeword_path := get_codeword_path(arg, self.config[self.language][self.CODEWORD_FOLDER_PATH_KEY]):
                 codeword_path = possible_codeword_path
                 continue
         return language, codeword_path

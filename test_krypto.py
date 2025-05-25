@@ -8,11 +8,17 @@ import krypto
 def test_read_config():
     config_path = Path(__file__).parent / "test_stuff" / "test_config.conf"
     default_language, config_dict = krypto.read_config(config_path)
+
     assert default_language == "tag"
+    assert config_dict["tag"]["name"] == "default"
     assert config_dict["tag"]["alphabet"] == "abcdefg"
     assert config_dict["tag"]["wordlist_path"] == Path("test_stuff") / "test_wordlist"
+    assert config_dict["tag"]["codeword_folder_path"] == Path("test_stuff")
+
+    assert config_dict["another_tag"]["name"] == "second"
     assert config_dict["another_tag"]["alphabet"] == "abcdefghijklmnopqrstuvwxyzåäö"
     assert config_dict["another_tag"]["wordlist_path"] is None
+    assert config_dict["another_tag"]["codeword_folder_path"] == Path(__file__).parent
 
 
 def test_get_language_dict():
