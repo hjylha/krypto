@@ -17,5 +17,5 @@ python krypto.py
 ```
 This prompts you to select language and type the path to the file with the codewords in it. If you want to bypass these selections, you can add the language tag and filepath as extra arguments, i.e. run command of form
 ```
-python krypto.py file_with_codewords.csv en
+python krypto.py en file_with_codewords.csv
 ```
