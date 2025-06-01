@@ -22,4 +22,6 @@ This prompts you to select language and type the path to the file with the codew
 python krypto.py en file_with_codewords.csv
 ```
 
-![Sama suomeksi](pics/ratkaisu.PNG)
+Ja homma toimii myös suomeksi:
+
+![Ratkaisu](pics/ratkaisu.PNG)
