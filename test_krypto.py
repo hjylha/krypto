@@ -38,6 +38,16 @@ def test_get_wordlist():
     assert krypto.get_wordlist(wordlist_path) == expected_wordlist
 
 
+def test_get_csv_files_in_folder():
+    csv_files = list(krypto.get_csv_files_in_folder())
+    path1 = Path(__file__).parent.parent / "cw25-05-12.csv"
+    if path1.exists():
+        assert path1 in csv_files
+    path2 = Path(__file__).parent.parent / "k24-51-52.csv"
+    if path2.exists():
+        assert path2 in csv_files
+
+
 def test_get_codewords():
     codeword_path = Path(__file__).parent / "test_stuff" / "test_codewords"
     expected_codewords = [

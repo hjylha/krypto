@@ -62,6 +62,12 @@ def get_wordlist(wordlist_path):
     return wordlist
 
 
+def get_csv_files_in_folder(folder_path=None):
+    if folder_path is None:
+        folder_path = Path(__file__).parent
+    return folder_path.glob("*.csv")
+
+
 def get_codeword_path(path_str, folder_path=None):
     if folder_path:
         # print(f"{folder_path} exists: {folder_path.exists()}")
@@ -659,8 +665,14 @@ class Krypto:
                     
     def choose_codeword_path(self):
         while True:
+            found_csv_files_text = self.current_language_dict["found_csv_files_text"]
+            print(found_csv_files_text)
+            for csv_path in get_csv_files_in_folder(self.config[self.language][self.CODEWORD_FOLDER_PATH_KEY]):
+                print(f"\t{csv_path.name}")
             prompt_text = self.current_language_dict["codeword_path_prompt"]
+            # print(prompt_text)
             path_answer = input(f"{prompt_text} ")
+            # path_answer = input()
             codeword_path = get_codeword_path(path_answer, self.config[self.language][self.CODEWORD_FOLDER_PATH_KEY])
             if codeword_path is not None:
                 return codeword_path

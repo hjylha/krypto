@@ -24,6 +24,7 @@ choose_language;Valitse kieli (vaihtoehdot: %1%):;Choose language (available: %1
 add_new_language_question;Haluatko lisätä uuden kielen, %1%? [HUOM: kielen lisäys ei toimi];Do you want to add a new language, %1%? [NOTE: This has not been implemented yet];
 try_again_question;Haluatko yrittää uudelleen?;Do you want to try again?;
 codeword_path_prompt;Kirjoita kryptosanat sisältävän csv-tiedoston polku:;Type the path to the csv file with codewords:;
+found_csv_files_text;Seuraavat csv-tiedostot havaittiin:;The following csv files were detected:;
 file_not_found_try_again;Tiedostoa %1% ei lödy. Haluatko yrittää uudelleen?;File %1% does not exist. Do you want to try again?;
 number_prompt;Numero (tai numerot pilkuilla erotettuina): ;Number (or numbers separated by commas): ;
 letter_prompt;Kirjain (tai kirjaimet pilkuilla erotettuina) ;Letter (or letters separated by commas): ;
