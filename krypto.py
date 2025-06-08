@@ -726,7 +726,7 @@ class Krypto:
         num_prompt = self.current_language_dict["number_prompt"]
         num_input = input(num_prompt)
         char_prompt = self.current_language_dict["letter_prompt"]
-        char = input(char_prompt)
+        char = input(char_prompt).strip()
         try:
             num = int(num_input)
             nums = [num]

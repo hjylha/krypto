@@ -27,7 +27,7 @@ codeword_path_prompt;Kirjoita kryptosanat sisältävän csv-tiedoston polku:;Typ
 found_csv_files_text;Seuraavat csv-tiedostot havaittiin:;The following csv files were detected:;
 file_not_found_try_again;Tiedostoa %1% ei lödy. Haluatko yrittää uudelleen?;File %1% does not exist. Do you want to try again?;
 number_prompt;Numero (tai numerot pilkuilla erotettuina): ;Number (or numbers separated by commas): ;
-letter_prompt;Kirjain (tai kirjaimet pilkuilla erotettuina) ;Letter (or letters separated by commas): ;
+letter_prompt;Kirjain (tai kirjaimet pilkuilla erotettuina): ;Letter (or letters separated by commas): ;
 missing_letters_text;Kirjaimet, joita ei vielä ole ratkaistu:;Letters yet to be included in substitution table:;
 invalid_number_text;%1% ei ole sallittu numero;%1% is not a valid number;
 not_in_alphabet_text;%1% ei ole aakkosissa (%2%);%1% not in alphabet (%2%);
