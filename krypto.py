@@ -206,8 +206,6 @@ def does_word_match_to_substitution_tuple(word, codeword, substitution_tuple):
     return True
 
 def do_two_words_match(word1, word2, codeword1, codeword2):
-    if len(word1) != len(word2):
-        return False
     for num1, char1 in zip(codeword1, word1):
         for num2, char2 in zip(codeword2, word2):
             if num1 == num2 and char1 != char2:

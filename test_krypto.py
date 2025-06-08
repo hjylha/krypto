@@ -167,7 +167,8 @@ def test_does_word_match_to_substitution_tuple(word, codeword, substitution_tupl
     "word1, word2, codeword1, codeword2, result", [
         ("some", "some", (3, 22, 24, 15), (21, 15, 13, 11), False),
         ("cola", "camp", (3, 22, 24, 15), (21, 15, 13, 11), False),
-        ("zola", "camp", (3, 22, 24, 15), (21, 15, 13, 11), True)
+        ("zola", "camp", (3, 22, 24, 15), (21, 15, 13, 11), True),
+        ("caesar", "camp", (21, 15, 26, 28, 15, 2), (21, 15, 13, 11), True)
     ]
 )
 def test_do_two_words_match(word1, word2, codeword1, codeword2, result):
