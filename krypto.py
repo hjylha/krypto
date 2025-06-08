@@ -205,6 +205,17 @@ def does_word_match_to_substitution_tuple(word, codeword, substitution_tuple):
             return False
     return True
 
+def do_two_words_match(word1, word2, codeword1, codeword2):
+    if len(word1) != len(word2):
+        return False
+    for num1, char1 in zip(codeword1, word1):
+        for num2, char2 in zip(codeword2, word2):
+            if num1 == num2 and char1 != char2:
+                return False
+            if num1 != num2 and char1 == char2:
+                return False
+    return True
+
 
 def get_matching_words(codeword, wordlist, maximum_matched_words=None):
     if not wordlist:
@@ -376,18 +387,23 @@ class CodewordPuzzle:
         return "".join(chars)            
 
     def match_two_codewords(self, codeword1, codeword2, maximum_matches):
-        matching_indices = dict()
-        for char in codeword1:
-            if matching_indices.get(char) is None:
-                matching_indices[char] = [i for i, c in enumerate(codeword2) if c == char]
+        # matching_indices = dict()
+        # for char in codeword1:
+        #     if matching_indices.get(char) is None:
+        #         matching_indices[char] = [i for i, c in enumerate(codeword2) if c == char]
 
         matching_pairs = []
         for word1 in self.matched_words[codeword1]:
-            m_indices = dict()
-            for i, char in enumerate(word1):
-                m_indices[char] = matching_indices[codeword1[i]]
+            # m_indices = dict()
+            # for i, char in enumerate(word1):
+            #     if m_indices.get(char) is None:
+            #         m_indices[char] = [i]
+            #     else:
+            #         m_indices[char].append(i)
+                # m_indices[char] = matching_indices[codeword1[i]]
             for word2 in self.matched_words[codeword2]:
-                if does_word_match_to_matching_indices(word2, m_indices):
+                # if does_word_match_to_matching_indices(word2, m_indices):
+                if do_two_words_match(word1, word2, codeword1, codeword2):
                     matching_pairs.append((word1, word2))
                     if len(matching_pairs) > maximum_matches:
                         return []

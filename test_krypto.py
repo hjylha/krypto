@@ -163,6 +163,17 @@ def test_does_word_match_to_substitution_tuple(word, codeword, substitution_tupl
     assert krypto.does_word_match_to_substitution_tuple(word, codeword, substitution_tuple) == result
 
 
+@pytest.mark.parametrize(
+    "word1, word2, codeword1, codeword2, result", [
+        ("some", "some", (3, 22, 24, 15), (21, 15, 13, 11), False),
+        ("cola", "camp", (3, 22, 24, 15), (21, 15, 13, 11), False),
+        ("zola", "camp", (3, 22, 24, 15), (21, 15, 13, 11), True)
+    ]
+)
+def test_do_two_words_match(word1, word2, codeword1, codeword2, result):
+    assert krypto.do_two_words_match(word1, word2, codeword1, codeword2) == result
+
+
 def test_get_matching_words():
     codeword = (1, 2, 3, 3, 4)
     wordlist = ["hello", "world", "tiny", "english", "abccd"]
@@ -192,6 +203,16 @@ def test_does_word_match_to_matching_indices():
     assert krypto.does_word_match_to_matching_indices(word, dict_works)
     assert not krypto.does_word_match_to_matching_indices(word, dict_doesnt_work)
     assert not krypto.does_word_match_to_matching_indices(word, dict_doesnt_work_either)
+
+def test_does_word_match_to_matching_indices2():
+    matching_indices = {
+        "c": [0],
+        "o": [1],
+        "l": [2],
+        "a": [3]
+    }
+    word = "camp"
+    assert not krypto.does_word_match_to_matching_indices(word, matching_indices)
 
 
 def test_does_word_match_to_fixed_index_values():
@@ -313,3 +334,49 @@ def test_CodewordPuzzle_init(puzzle):
         (21, 15, 13, 11): ["some", "read", "cola", "camp"]
     }
 
+
+# def test_issue1():
+#     codeword1 = (3, 22, 24, 15)
+#     codeword2 = (21, 15, 13, 11)
+#     matching_indices = dict()
+#     for num in codeword1:
+#         if matching_indices.get(num) is None:
+#             matching_indices[num] = [i for i, c in enumerate(codeword2) if c == num]
+#     assert matching_indices == {3: [], 22: [], 24: [], 15: [1]}
+
+# def test_issue2():
+#     codeword1 = (3, 22, 24, 15)
+#     codeword2 = (21, 15, 13, 11)
+#     word1 = "cola"
+#     word2 = "camp"
+#     m_indices = dict()
+#     for i, char in enumerate(word1):
+#         if m_indices.get(char) is None:
+#             m_indices[char] = [i]
+#         else:
+#             m_indices[char].append(i)
+#     assert m_indices == {"c": [0], "o": [1], "l": [2], "a": [3]}
+
+#     word1 = "some"
+#     m_indices = dict()
+#     for i, char in enumerate(word1):
+#         if m_indices.get(char) is None:
+#             m_indices[char] = [i]
+#         else:
+#             m_indices[char].append(i)
+#     assert m_indices == {"s": [0], "o": [1], "m": [2], "e": [3]}
+
+# def test_issue3():
+#     word2 = "camp"
+#     m_indices = {"c": [0], "o": [1], "l": [2], "a": [3]}
+#     assert not krypto.does_word_match_to_matching_indices(word2, m_indices)
+
+#     word2 = "some"
+#     m_indices = {"s": [0], "o": [1], "m": [2], "e": [3]}
+
+
+def test_match_two_codewords(puzzle):
+    codeword1 = (3, 22, 24, 15)
+    codeword2 = (21, 15, 13, 11)
+    maximum_matches = 999_999
+    assert puzzle.match_two_codewords(codeword1, codeword2, maximum_matches) == [("some", "read")]
