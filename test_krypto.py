@@ -34,7 +34,7 @@ def test_get_language_dict():
 
 def test_get_wordlist():
     wordlist_path = Path(__file__).parent / "test_stuff" / "test_wordlist"
-    expected_wordlist = ["some", "words", "here", "to", "be", "read", "by", "someone", "or", "something"]
+    expected_wordlist = ["some", "words", "here", "to", "be", "read", "by", "someone", "or", "something", "cola", "camp"]
     assert krypto.get_wordlist(wordlist_path) == expected_wordlist
 
 
@@ -54,10 +54,13 @@ def test_get_codewords():
         (1, 2, 3, 4, 5, 6),
         (3, 7, 9),
         (8, 10, 11),
-        (10, 12, 13)
+        (10, 12, 13),
+        (3, 22, 24, 15),
+        (21, 15, 13, 11)
     ]
+    expected_comments = ["this is a comment", "another line"]
     comments, codewords = krypto.get_codewords(codeword_path)
-    assert comments == []
+    assert comments == expected_comments
     assert codewords == expected_codewords
 
 
@@ -240,3 +243,73 @@ def test_codeword_as_str(codeword, written_codeword):
 )
 def test_mass_replace(text, additions, result):
     assert krypto.mass_replace(text, *additions) == result
+
+
+@pytest.fixture
+def puzzle():
+    codeword_path = Path(__file__).parent / "test_stuff" / "test_codewords"
+    comments, codewords = krypto.get_codewords(codeword_path)
+    config_path = Path(__file__).parent / "test_stuff" / "test_config.conf"
+    default_language, config_dict = krypto.read_config(config_path)
+    wordlist = krypto.get_wordlist(config_dict[default_language]["wordlist_path"])
+    return krypto.CodewordPuzzle(codewords, wordlist, config_dict[default_language]["alphabet"], comments)
+
+
+def test_CodewordPuzzle_init(puzzle):
+    expected_codewords = [
+        (1, 2, 3, 4, 5, 6),
+        (3, 7, 9),
+        (8, 10, 11),
+        (10, 12, 13),
+        (3, 22, 24, 15),
+        (21, 15, 13, 11)
+    ]
+    assert puzzle.codewords == expected_codewords
+    expected_comments = ["this is a comment", "another line"]
+    assert puzzle.comments == expected_comments
+
+    expected_wordlist = ["some", "words", "here", "to", "be", "read", "by", "someone", "or", "something", "cola", "camp"]
+    assert puzzle.wordlist == expected_wordlist
+
+    assert puzzle.alphabet == "abcdefg"
+
+    expected_substitution_dict = {
+        1: "",
+        2: "",
+        3: "",
+        4: "",
+        5: "",
+        6: "",
+        7: "",
+        8: "",
+        9: "",
+        10: "",
+        11: "",
+        12: "",
+        13: "",
+        15: "",
+        21: "",
+        22: "",
+        24: ""
+    }
+    assert puzzle.substitution_dict == expected_substitution_dict
+
+    expected_wordlist2 = ["to", "be", "by", "or"]
+    assert puzzle.wordlists[2] == expected_wordlist2
+    expected_wordlist4 = ["some", "here", "read", "cola", "camp"]
+    assert puzzle.wordlists[4] == expected_wordlist4
+
+    expected_matches = {
+        (1, 2, 3, 4, 5, 6): [],
+        (3, 7, 9): [],
+        (8, 10, 11): [],
+        (10, 12, 13): [],
+        (3, 22, 24, 15): ["some", "read", "cola", "camp"],
+        (21, 15, 13, 11): ["some", "read", "cola", "camp"]
+    }
+    assert puzzle.matched_words_all == expected_matches
+    assert puzzle.matched_words == {
+        (3, 22, 24, 15): ["some", "read", "cola", "camp"],
+        (21, 15, 13, 11): ["some", "read", "cola", "camp"]
+    }
+
