@@ -207,6 +207,8 @@ def does_word_match_to_substitution_tuple(word, codeword, substitution_tuple):
 
 
 def get_matching_words(codeword, wordlist, maximum_matched_words=None):
+    if not wordlist:
+        return []
     matched_words = []
     if maximum_matched_words is not None:
         for word in wordlist:
@@ -302,7 +304,7 @@ class CodewordPuzzle:
                 continue
             self.wordlists[num].append(word)
         
-        self.matched_words_all = {codeword: get_matching_words(codeword, self.wordlists[len(codeword)]) for codeword in self.codewords}
+        self.matched_words_all = {codeword: get_matching_words(codeword, self.wordlists.get(len(codeword))) for codeword in self.codewords}
         self.matched_words = {codeword: words for codeword, words in self.matched_words_all.items() if words}
 
     def clear_substitution_dict(self):
