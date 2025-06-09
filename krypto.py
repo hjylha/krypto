@@ -392,6 +392,7 @@ class CodewordPuzzle:
 
         matching_pairs = []
         for word1 in self.matched_words[codeword1]:
+            extra_substitution_dict = {num: char for num, char in zip(codeword1, word1)}
             # m_indices = dict()
             # for i, char in enumerate(word1):
             #     if m_indices.get(char) is None:
@@ -400,11 +401,23 @@ class CodewordPuzzle:
             #         m_indices[char].append(i)
                 # m_indices[char] = matching_indices[codeword1[i]]
             for word2 in self.matched_words[codeword2]:
-                # if does_word_match_to_matching_indices(word2, m_indices):
-                if do_two_words_match(word1, word2, codeword1, codeword2):
+                for num, char in zip(codeword2, word2):
+                    expected_char = extra_substitution_dict.get(num)
+                    if expected_char is None and char in extra_substitution_dict.values():
+                        break
+                    if expected_char is None:
+                        continue
+                    if expected_char != char:
+                        break
+                else:
                     matching_pairs.append((word1, word2))
                     if len(matching_pairs) > maximum_matches:
                         return []
+                # if does_word_match_to_matching_indices(word2, m_indices):
+                # if do_two_words_match(word1, word2, codeword1, codeword2):
+                #     matching_pairs.append((word1, word2))
+                #     if len(matching_pairs) > maximum_matches:
+                #         return []
         return matching_pairs
     
     def match_all_codeword_pairs(self, max_unique_pairs = 5):
