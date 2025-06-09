@@ -1068,6 +1068,7 @@ class Krypto:
             except ValueError:
                 if choice_input.lower() == "q":
                     exit()
+            choice_num = None
         print()
         if choice_num == 0:
             ans = yes_or_no_question(self.current_language_dict["exit_confirmation"])
