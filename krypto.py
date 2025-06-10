@@ -465,7 +465,7 @@ class CodewordPuzzle:
                     yield (codeword1, codeword2), matched_pairs[0]
                 else:
                     pairs_left.add((codeword1, codeword2))
-        # i guess make sure this still does somethisg even if no unique pairs were found
+        # i guess make sure this still does something even if no unique pairs were found
         maximum_num_of_pairs += 1
         while pairs_left:
             pairs_still_left = set()
@@ -817,38 +817,85 @@ class Krypto:
             self.puzzle.add_to_substitution_dict(num, char, override=True)
         self.puzzle.set_matched_words()
 
-    def find_unique_pairs(self):
+    def print_pairs(self, codeword_pair, word_pair, max_codeword_length=None, max_word_length=None, solved_char="*"):
+        codeword1, codeword2 = codeword_pair
+        if max_codeword_length is None:
+            max_codeword_length = max(len(str(codeword1)), len(str(codeword2)))
+        word1, word2 = word_pair
+        if max_word_length is None:
+            max_word_length = max(len(word1), len(word2))
+        if self.puzzle.is_codeword_solved(codeword1):
+            word1 = f"{word1}{solved_char}"
+        if self.puzzle.is_codeword_solved(codeword2):
+            word2 = f"{word2}{solved_char}"
+        index1 = self.puzzle.codewords.index(codeword1) + 1
+        index2 = self.puzzle.codewords.index(codeword2) + 1
+        codeword1_str = ','.join([str(num) for num in codeword1])
+        codeword2_str = ','.join([str(num) for num in codeword2])
+        part1 = f"{add_whitespace(str(index1), 4)} {add_whitespace(codeword1_str, max_codeword_length)}"
+        part2 = f"{add_whitespace(str(index2), 4)} {add_whitespace(codeword2_str, max_codeword_length)}"
+        part3 = f"{add_whitespace(word1.upper(), max_word_length)}"
+        part4 = f"{add_whitespace(word2.upper(), max_word_length)}"
+        print(f"{part1}  {part2}    {part3}  {part4}")
+
+    def find_unique_pairs(self, solved_char="*"):
         unique_pairs = self.puzzle.find_all_unique_pairs()
         unique_pairs_found_text = mass_replace(self.current_language_dict["unique_pairs_found_text"], len(unique_pairs))
         print(unique_pairs_found_text)
-        solved_char = "*"
+        # solved_char = "*"
         solved_words_note = mass_replace(self.current_language_dict["solved_words_note"], solved_char)
         print(solved_words_note)
         # print(f"Found {len(unique_pairs)} unique pairs:")
-        max_length = 0
+        max_codeword_length = 0
+        max_word_length = 0
         for codeword_pair, _ in unique_pairs:
             codeword1, codeword2 = codeword_pair
+            if (new_max := max(len(codeword1), len(codeword2))) > max_word_length:
+                max_word_length = new_max
             codeword1_str = codeword_as_str(codeword1)
             codeword2_str = codeword_as_str(codeword2)
-            if (new_max := max(len(codeword1_str), len(codeword2_str))) > max_length:
-                max_length = new_max
+            if (new_max := max(len(codeword1_str), len(codeword2_str))) > max_codeword_length:
+                max_codeword_length = new_max
         for codeword_pair, word_pair in unique_pairs:
-            codeword1, codeword2 = codeword_pair
-            word1, word2 = word_pair
-            if self.puzzle.is_codeword_solved(codeword1):
-                word1 = f"{word1}{solved_char}"
-            if self.puzzle.is_codeword_solved(codeword2):
-                word2 = f"{word2}{solved_char}"
-            index1 = self.puzzle.codewords.index(codeword1) + 1
-            index2 = self.puzzle.codewords.index(codeword2) + 1
-            codeword1_str = ','.join([str(num) for num in codeword1])
-            codeword2_str = ','.join([str(num) for num in codeword2])
-            part1 = f"{add_whitespace(str(index1), 4)} {add_whitespace(codeword1_str, max_length)}"
-            part2 = f"{add_whitespace(str(index2), 4)} {add_whitespace(codeword2_str, max_length)}"
-            part3 = f"{add_whitespace(word1.upper(), max_length)}"
-            part4 = f"{add_whitespace(word2.upper(), max_length)}"
-            print(f"{part1}  {part2}    {part3}  {part4}")
+            self.print_pairs(codeword_pair, word_pair, max_codeword_length, max_word_length, solved_char)
+            # codeword1, codeword2 = codeword_pair
+            # word1, word2 = word_pair
+            # if self.puzzle.is_codeword_solved(codeword1):
+            #     word1 = f"{word1}{solved_char}"
+            # if self.puzzle.is_codeword_solved(codeword2):
+            #     word2 = f"{word2}{solved_char}"
+            # index1 = self.puzzle.codewords.index(codeword1) + 1
+            # index2 = self.puzzle.codewords.index(codeword2) + 1
+            # codeword1_str = ','.join([str(num) for num in codeword1])
+            # codeword2_str = ','.join([str(num) for num in codeword2])
+            # part1 = f"{add_whitespace(str(index1), 4)} {add_whitespace(codeword1_str, max_length)}"
+            # part2 = f"{add_whitespace(str(index2), 4)} {add_whitespace(codeword2_str, max_length)}"
+            # part3 = f"{add_whitespace(word1.upper(), max_length)}"
+            # part4 = f"{add_whitespace(word2.upper(), max_length)}"
+            # print(f"{part1}  {part2}    {part3}  {part4}")
         return unique_pairs
+    
+    def print_solving_stats(self, elapsed_time):
+        print()
+        solving_time_text = mass_replace(self.current_language_dict["solving_time_with_steps_text"], round(elapsed_time, 3))
+        print(solving_time_text)
+        
+        num_of_solved_codewords = 0
+        num_of_found_words = 0
+        for codeword in self.puzzle.codewords:
+            if self.puzzle.is_codeword_solved(codeword):
+                num_of_solved_codewords += 1
+            word = self.puzzle.get_decrypted_codeword(codeword)
+            if word in self.puzzle.matched_words_all[codeword]:
+                num_of_found_words += 1
+        found_codewords_text = mass_replace(self.current_language_dict["found_codewords_text"], num_of_solved_codewords, len(self.puzzle.codewords))
+        print(found_codewords_text)
+        found_codewords_in_wordlist_text = mass_replace(self.current_language_dict["found_codewords_in_wordlist_text"], num_of_found_words)
+        print(found_codewords_in_wordlist_text)
+
+        num_of_solved_numbers = len([value for value in self.puzzle.substitution_dict.values() if value])
+        substitution_table_decipher_text = mass_replace(self.current_language_dict["substitution_table_decipher_text"], num_of_solved_numbers, len(self.puzzle.substitution_dict))
+        print(substitution_table_decipher_text)
 
     def try_to_solve_puzzle(self, minimum_matches_wanted=None):
     # def try_to_solve_puzzle(self, minimum_matches_wanted, minimum_letter_matches_wanted, num_of_iterations):
@@ -891,6 +938,7 @@ class Krypto:
             if len(codeword_str) > max_codeword_length:
                 max_codeword_length = len(codeword_str)
         
+        # only using best pairs
         start_time = time.time()
         found_words = 0
         max_num_size = len(str(len(self.puzzle.codewords)))
@@ -901,28 +949,32 @@ class Krypto:
             part2 = f"{add_whitespace(word.upper(), max_word_length)}"
             print(f"{add_whitespace(str(found_words), max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
         end_time = time.time()
+        self.print_solving_stats(end_time - start_time)
 
-        print()
-        solving_time_text = mass_replace(self.current_language_dict["solving_time_with_steps_text"], round(end_time - start_time, 3))
-        print(solving_time_text)
-        
-        num_of_solved_codewords = 0
-        num_of_found_words = 0
-        for codeword in self.puzzle.codewords:
-            if self.puzzle.is_codeword_solved(codeword):
-                num_of_solved_codewords += 1
-            word = self.puzzle.get_decrypted_codeword(codeword)
-            if word in self.puzzle.matched_words_all[codeword]:
-                num_of_found_words += 1
-        found_codewords_text = mass_replace(self.current_language_dict["found_codewords_text"], num_of_solved_codewords, len(self.puzzle.codewords))
-        print(found_codewords_text)
-        found_codewords_in_wordlist_text = mass_replace(self.current_language_dict["found_codewords_in_wordlist_text"], num_of_found_words)
-        print(found_codewords_in_wordlist_text)
+        # guess the first pair and then go on
+        # original_substitution_dict = self.puzzle.substitution_dict.copy()
+        # start_time = time.time()
+        # # found_words = 0
+        # max_num_size = len(str(len(self.puzzle.codewords)))
+        # for codeword_pair, word_pair in self.puzzle.find_pairs():
+        #     found_words = 2
+        #     print(f"")
+        #     substitution_tuple = get_substitution_tuple(codeword_pair, word_pair)
+        #     for num, char in substitution_tuple:
+        #         self.puzzle.add_to_substitution_dict(num, char)
+        #     self.puzzle.set_matched_words()
+        #     for codeword, word in self.puzzle.try_to_solve_using_unique_pairs():
+        #         found_words += 1
+        #         codeword_str = codeword_as_str(codeword)
+        #         part1 = f"{add_whitespace(str(self.puzzle.codewords.index(codeword) + 1), 4)} {add_whitespace(codeword_str, max_codeword_length)}"
+        #         part2 = f"{add_whitespace(word.upper(), max_word_length)}"
+        #         print(f"{add_whitespace(str(found_words), max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
+        #     end_time = time.time()
 
-        num_of_solved_numbers = len([value for value in self.puzzle.substitution_dict.values() if value])
-        substitution_table_decipher_text = mass_replace(self.current_language_dict["substitution_table_decipher_text"], num_of_solved_numbers, len(self.puzzle.substitution_dict))
-        print(substitution_table_decipher_text)
-    
+        #     self.puzzle.substitution_dict = original_substitution_dict.copy()
+        #     start_time = time.time()
+            
+            
     def print_substitution_dict(self):
         nums = sorted(self.puzzle.substitution_dict.keys())
         nums_as_str = [str(num) for num in nums]
