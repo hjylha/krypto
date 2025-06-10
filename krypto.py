@@ -631,6 +631,8 @@ class Krypto:
     WORDLIST_PATH_KEY = "wordlist_path"
     CODEWORD_FOLDER_PATH_KEY = "codeword_folder_path"
 
+    SOLUTION_SUCCESS_THRESHOLD = 0.75
+
     def __init__(self, language_file_path=DEFAULT_LANGUAGE_FILE_PATH, config_path=DEFAULT_CONFIG_PATH, language=None, wordlist_path=None, codeword_path=None, puzzle=None):
         self.language_dict = get_language_dict(language_file_path)
         default_language, config = read_config(config_path)
@@ -820,7 +822,7 @@ class Krypto:
     def print_pairs(self, codeword_pair, word_pair, max_codeword_length=None, max_word_length=None, solved_char="*"):
         codeword1, codeword2 = codeword_pair
         if max_codeword_length is None:
-            max_codeword_length = max(len(str(codeword1)), len(str(codeword2)))
+            max_codeword_length = max(len(codeword_as_str(codeword1)), len(codeword_as_str(codeword2)))
         word1, word2 = word_pair
         if max_word_length is None:
             max_word_length = max(len(word1), len(word2))
@@ -836,11 +838,13 @@ class Krypto:
         part2 = f"{add_whitespace(str(index2), 4)} {add_whitespace(codeword2_str, max_codeword_length)}"
         part3 = f"{add_whitespace(word1.upper(), max_word_length)}"
         part4 = f"{add_whitespace(word2.upper(), max_word_length)}"
-        print(f"{part1}  {part2}    {part3}  {part4}")
+        print(f"{part1}   {part2}   {part3}  {part4}")
 
     def find_unique_pairs(self, solved_char="*"):
+        start_time = time.time()
         unique_pairs = self.puzzle.find_all_unique_pairs()
-        unique_pairs_found_text = mass_replace(self.current_language_dict["unique_pairs_found_text"], len(unique_pairs))
+        end_time = time.time()
+        unique_pairs_found_text = mass_replace(self.current_language_dict["unique_pairs_found_text"], len(unique_pairs), round(end_time - start_time, 3))
         print(unique_pairs_found_text)
         # solved_char = "*"
         solved_words_note = mass_replace(self.current_language_dict["solved_words_note"], solved_char)
@@ -858,21 +862,6 @@ class Krypto:
                 max_codeword_length = new_max
         for codeword_pair, word_pair in unique_pairs:
             self.print_pairs(codeword_pair, word_pair, max_codeword_length, max_word_length, solved_char)
-            # codeword1, codeword2 = codeword_pair
-            # word1, word2 = word_pair
-            # if self.puzzle.is_codeword_solved(codeword1):
-            #     word1 = f"{word1}{solved_char}"
-            # if self.puzzle.is_codeword_solved(codeword2):
-            #     word2 = f"{word2}{solved_char}"
-            # index1 = self.puzzle.codewords.index(codeword1) + 1
-            # index2 = self.puzzle.codewords.index(codeword2) + 1
-            # codeword1_str = ','.join([str(num) for num in codeword1])
-            # codeword2_str = ','.join([str(num) for num in codeword2])
-            # part1 = f"{add_whitespace(str(index1), 4)} {add_whitespace(codeword1_str, max_length)}"
-            # part2 = f"{add_whitespace(str(index2), 4)} {add_whitespace(codeword2_str, max_length)}"
-            # part3 = f"{add_whitespace(word1.upper(), max_length)}"
-            # part4 = f"{add_whitespace(word2.upper(), max_length)}"
-            # print(f"{part1}  {part2}    {part3}  {part4}")
         return unique_pairs
     
     def print_solving_stats(self, elapsed_time):
@@ -939,40 +928,53 @@ class Krypto:
                 max_codeword_length = len(codeword_str)
         
         # only using best pairs
-        start_time = time.time()
-        found_words = 0
-        max_num_size = len(str(len(self.puzzle.codewords)))
-        for codeword, word in self.puzzle.try_to_solve_using_unique_pairs():
-            found_words += 1
-            codeword_str = codeword_as_str(codeword)
-            part1 = f"{add_whitespace(str(self.puzzle.codewords.index(codeword) + 1), 4)} {add_whitespace(codeword_str, max_codeword_length)}"
-            part2 = f"{add_whitespace(word.upper(), max_word_length)}"
-            print(f"{add_whitespace(str(found_words), max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
-        end_time = time.time()
-        self.print_solving_stats(end_time - start_time)
+        # start_time = time.time()
+        # found_words = 0
+        # max_num_size = len(str(len(self.puzzle.codewords)))
+        # for codeword, word in self.puzzle.try_to_solve_using_unique_pairs():
+        #     found_words += 1
+        #     codeword_str = codeword_as_str(codeword)
+        #     part1 = f"{add_whitespace(str(self.puzzle.codewords.index(codeword) + 1), 4)} {add_whitespace(codeword_str, max_codeword_length)}"
+        #     part2 = f"{add_whitespace(word.upper(), max_word_length)}"
+        #     print(f"{add_whitespace(str(found_words), max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
+        # end_time = time.time()
+        # self.print_solving_stats(end_time - start_time)
 
         # guess the first pair and then go on
-        # original_substitution_dict = self.puzzle.substitution_dict.copy()
-        # start_time = time.time()
-        # # found_words = 0
-        # max_num_size = len(str(len(self.puzzle.codewords)))
-        # for codeword_pair, word_pair in self.puzzle.find_pairs():
-        #     found_words = 2
-        #     print(f"")
-        #     substitution_tuple = get_substitution_tuple(codeword_pair, word_pair)
-        #     for num, char in substitution_tuple:
-        #         self.puzzle.add_to_substitution_dict(num, char)
-        #     self.puzzle.set_matched_words()
-        #     for codeword, word in self.puzzle.try_to_solve_using_unique_pairs():
-        #         found_words += 1
-        #         codeword_str = codeword_as_str(codeword)
-        #         part1 = f"{add_whitespace(str(self.puzzle.codewords.index(codeword) + 1), 4)} {add_whitespace(codeword_str, max_codeword_length)}"
-        #         part2 = f"{add_whitespace(word.upper(), max_word_length)}"
-        #         print(f"{add_whitespace(str(found_words), max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
-        #     end_time = time.time()
+        original_substitution_dict = self.puzzle.substitution_dict.copy()
+        start_time = time.time()
+        # found_words = 0
+        max_num_size = len(str(len(self.puzzle.codewords)))
+        for codeword_pair, word_pair in self.puzzle.find_pairs():
+            found_words = 2
+            print(self.current_language_dict["first_guess_text"])
+            self.print_pairs(codeword_pair, word_pair)
+            substitution_tuple = get_substitution_tuple(codeword_pair, word_pair)
+            for num, char in substitution_tuple:
+                self.puzzle.add_to_substitution_dict(num, char)
+            self.puzzle.set_matched_words()
+            print()
+            print(self.current_language_dict["solution_continues_text"])
+            for codeword, word in self.puzzle.try_to_solve_using_unique_pairs():
+                found_words += 1
+                codeword_str = codeword_as_str(codeword)
+                part1 = f"{add_whitespace(str(self.puzzle.codewords.index(codeword) + 1), 4)} {add_whitespace(codeword_str, max_codeword_length)}"
+                part2 = f"{add_whitespace(word.upper(), max_word_length)}"
+                print(f"{add_whitespace(str(found_words), max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
+            end_time = time.time()
+            self.print_solving_stats(end_time - start_time)
 
-        #     self.puzzle.substitution_dict = original_substitution_dict.copy()
-        #     start_time = time.time()
+            # stop if "successful"
+            percentage_of_numbers_deciphered = len(set(self.puzzle.substitution_dict.values())) / len(self.puzzle.substitution_dict)
+            if percentage_of_numbers_deciphered >= self.SOLUTION_SUCCESS_THRESHOLD:
+                return
+
+            print()
+            go_on = self.yes_no_question(self.current_language_dict["guess_again_question"])
+            if not go_on:
+                return
+            self.puzzle.substitution_dict = original_substitution_dict.copy()
+            start_time = time.time()
             
             
     def print_substitution_dict(self):
