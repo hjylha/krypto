@@ -175,6 +175,40 @@ def test_do_two_words_match(word1, word2, codeword1, codeword2, result):
     assert krypto.do_two_words_match(word1, word2, codeword1, codeword2) == result
 
 
+@pytest.mark.parametrize(
+        "codeword, expected_result", [
+            ((9, 9), {9: [0, 1]}),
+            ((1, 2), {1: [0], 2: [1]}),
+            ((2, 1), {1: [1], 2: [0]})
+        ]
+)
+def test_get_nums_and_indices_dict(codeword, expected_result):
+    assert krypto.get_nums_and_indices_dict(codeword) == expected_result
+    
+
+@pytest.mark.parametrize(
+        "codeword1, codeword2, expected_result", [
+            ((1, 1), (2, 2), (tuple(), (0,), (0,))),
+            ((1, 2), (2, 1), (((0, 1), (1, 0)), tuple(), tuple())),
+            ((1, 2, 3, 3, 4), (3, 5, 6, 2), (((1, 3), (2, 0)), (0, 4), (1, 2)))
+        ]
+)
+def test_get_matching_indices(codeword1, codeword2, expected_result):
+    result = krypto.get_matching_indices(codeword1, codeword2)
+    assert result[0] == expected_result[0]
+    assert result[1] == expected_result[1]
+    assert result[2] == expected_result[2]
+
+
+def test_do_words_match_to_matching_indices():
+    word1 = "hello"
+    word2 = "live"
+    matching_indices = ((1, 3), (2, 0))
+    indices_in_word1 = (0, 4)
+    indices_in_word2 = (1, 2)
+    assert krypto.do_words_match_to_matching_indices(word1, word2, matching_indices, indices_in_word1, indices_in_word2)
+
+
 def test_get_matching_words():
     codeword = (1, 2, 3, 3, 4)
     wordlist = ["hello", "world", "tiny", "english", "abccd"]

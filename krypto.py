@@ -215,6 +215,46 @@ def do_two_words_match(word1, word2, codeword1, codeword2):
     return True
 
 
+def get_nums_and_indices_dict(codeword):
+    indices = dict()
+    for i, num in enumerate(codeword):
+        if indices.get(num) is None:
+            indices[num] = [i]
+        else:
+            indices[num].append(i)
+    return indices
+
+
+def get_matching_indices(codeword1, codeword2):
+    indices1 = get_nums_and_indices_dict(codeword1)
+    indices2 = get_nums_and_indices_dict(codeword2)
+    matching_indices = []
+    others1 = []
+    for num, indices in indices1.items():
+        if (index2 := indices2.get(num)) is not None:
+            matching_indices.append((indices[0], index2[0]))
+        else:
+            others1.append(indices[0])
+    others2 = []
+    for num, indices in indices2.items():
+        if indices1.get(num) is None:
+            others2.append(indices[0])
+    return tuple(matching_indices), tuple(others1), tuple(others2)
+
+
+def do_words_match_to_matching_indices(word1, word2, matching_indices, indices_in_1, indices_in_2):
+    for index1, index2 in matching_indices:
+        if word1[index1] != word2[index2]:
+            return False
+    for index1 in indices_in_1:
+        if word1[index1] in word2:
+            return False
+    for index2 in indices_in_2:
+        if word2[index2] in word1:
+            return False
+    return True
+
+
 def get_matching_words(codeword, wordlist, maximum_matched_words=None):
     if not wordlist:
         return []
@@ -389,10 +429,13 @@ class CodewordPuzzle:
         # for char in codeword1:
         #     if matching_indices.get(char) is None:
         #         matching_indices[char] = [i for i, c in enumerate(codeword2) if c == char]
+        matching_indices, others1, others2 = get_matching_indices(codeword1, codeword2)
 
         matching_pairs = []
         for word1 in self.matched_words[codeword1]:
-            extra_substitution_dict = {num: char for num, char in zip(codeword1, word1)}
+            # extra_substitution_dict = {num: char for num, char in zip(codeword1, word1)}
+            # chars_in_word1 = tuple(extra_substitution_dict.values())
+            # extra_substitution_tuple = get_substitution_tuple([codeword1], [word1])
             # m_indices = dict()
             # for i, char in enumerate(word1):
             #     if m_indices.get(char) is None:
@@ -401,18 +444,26 @@ class CodewordPuzzle:
             #         m_indices[char].append(i)
                 # m_indices[char] = matching_indices[codeword1[i]]
             for word2 in self.matched_words[codeword2]:
-                for num, char in zip(codeword2, word2):
-                    expected_char = extra_substitution_dict.get(num)
-                    if expected_char is None and char in extra_substitution_dict.values():
-                        break
-                    if expected_char is None:
-                        continue
-                    if expected_char != char:
-                        break
-                else:
+                if do_words_match_to_matching_indices(word1, word2, matching_indices, others1, others2):
                     matching_pairs.append((word1, word2))
                     if len(matching_pairs) > maximum_matches:
                         return []
+                # if does_word_match_to_substitution_tuple(word2, codeword2, extra_substitution_tuple):
+                #     matching_pairs.append((word1, word2))
+                #     if len(matching_pairs) > maximum_matches:
+                #         return []
+                # for num, char in zip(codeword2, word2):
+                #     expected_char = extra_substitution_dict.get(num)
+                #     if expected_char is None and char in chars_in_word1:
+                #         break
+                #     if expected_char is None:
+                #         continue
+                #     if expected_char != char:
+                #         break
+                # else:
+                #     matching_pairs.append((word1, word2))
+                #     if len(matching_pairs) > maximum_matches:
+                #         return []
                 # if does_word_match_to_matching_indices(word2, m_indices):
                 # if do_two_words_match(word1, word2, codeword1, codeword2):
                 #     matching_pairs.append((word1, word2))
@@ -943,7 +994,6 @@ class Krypto:
         # guess the first pair and then go on
         original_substitution_dict = self.puzzle.substitution_dict.copy()
         start_time = time.time()
-        # found_words = 0
         max_num_size = len(str(len(self.puzzle.codewords)))
         for codeword_pair, word_pair in self.puzzle.find_pairs():
             found_words = 2
