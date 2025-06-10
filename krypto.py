@@ -876,7 +876,7 @@ class Krypto:
             max_codeword_length = max(len(codeword_as_str(codeword1)), len(codeword_as_str(codeword2)))
         word1, word2 = word_pair
         if max_word_length is None:
-            max_word_length = max(len(word1), len(word2))
+            max_word_length = max(len(word1), len(word2)) + 1
         if self.puzzle.is_codeword_solved(codeword1):
             word1 = f"{word1}{solved_char}"
         if self.puzzle.is_codeword_solved(codeword2):
@@ -906,7 +906,7 @@ class Krypto:
         for codeword_pair, _ in unique_pairs:
             codeword1, codeword2 = codeword_pair
             if (new_max := max(len(codeword1), len(codeword2))) > max_word_length:
-                max_word_length = new_max
+                max_word_length = new_max + 1
             codeword1_str = codeword_as_str(codeword1)
             codeword2_str = codeword_as_str(codeword2)
             if (new_max := max(len(codeword1_str), len(codeword2_str))) > max_codeword_length:
