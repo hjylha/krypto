@@ -1017,6 +1017,7 @@ class Krypto:
 
         # try to guess first
         original_substitution_dict = self.puzzle.substitution_dict.copy()
+        print(self.current_language_dict["guessing_text"])
         start_time = time.time()
         max_num_size = len(str(len(self.puzzle.codewords)))
         guesses = self.puzzle.try_to_solve_by_guessing()
@@ -1030,6 +1031,7 @@ class Krypto:
             self.print_solving_stats(end_time - start_time)
             return
         
+        print(self.current_language_dict["guessing_fail_text"])
         self.puzzle.substitution_dict = original_substitution_dict.copy()
         self.puzzle.set_matched_words()
         found_words = 0

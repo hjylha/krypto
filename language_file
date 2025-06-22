@@ -46,6 +46,8 @@ found_codewords_in_wordlist_text;%1% ratkaistua sanaa sanalistassa;%1% solved wo
 substitution_table_decipher_text;%1% / %2% numero-kirjain-paria ratkaistu;%1% out of %2% numbers deciphered;
 words_matching_codeword_text;%1% sanaa vastaa kryptosanaa %2% %3%:;%1% words match %2% %3%:;
 matching_words_text;%1% sopivaa sanaa;%1% matching words;
+guessing_text;Yritetään ratkaista arvaamalla:;Trying to solve the puzzle by guessing:;
+guessing_fail_text;Arvaus ei onnistunut. Yritetään systemaattisemmin:;Guessing failed. Trying a more methodical approach:;
 first_guess_text;Nopea arvaus: ;Quick guess: ;
 guess_again_question;Haluatko kokeilla ratkaisua uudelleen;Do you want to try to solve the puzzle again;
 solution_continues_text;Loput systemaattisemmin:;Solving the rest more methodically:;
