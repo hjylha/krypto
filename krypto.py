@@ -725,6 +725,9 @@ class Krypto:
         self.wordlist_path = wordlist_path
         self.codeword_path = codeword_path
         self.puzzle = puzzle
+        self.max_codeword_length = 0
+        self.max_word_length = 0
+        self.max_num_size = 0
 
     def get_yes_no_tuple(self):
         return (self.current_language_dict["yes"][0], self.current_language_dict["no"][0])
@@ -813,6 +816,14 @@ class Krypto:
         # print(self.language, self.wordlist_path)
         wordlist = [word for word in wordlist if are_letters_in_alphabet(word, alphabet)]
         self.puzzle = CodewordPuzzle(codewords, wordlist, alphabet, comments)
+        
+        for codeword in self.puzzle.codewords:
+            if len(codeword) > self.max_word_length:
+                self.max_word_length = len(codeword)
+            codeword_str = codeword_as_str(codeword)
+            if len(codeword_str) > self.max_codeword_length:
+                self.max_codeword_length = len(codeword_str)
+        self.max_num_size = len(str(len(self.puzzle.codewords)))
 
     def input_data_and_initialize_puzzle(self, language=None, codeword_path=None):
         if language is None:
@@ -992,15 +1003,29 @@ class Krypto:
             self.puzzle.add_to_substitution_dict(num, char)
         return solved_codewords, substitution_tuple
     
-    def try_to_solve_puzzle_with_steps(self):
-        max_codeword_length = 0
-        max_word_length = 0
-        for codeword in self.puzzle.codewords:
-            if len(codeword) > max_word_length:
-                max_word_length = len(codeword)
+    def try_to_solve_puzzle_methodically(self, start_time=None):
+        if start_time is None:
+            start_time = time.time()
+        found_words = 0
+        for codeword, word in self.puzzle.try_to_solve_using_unique_pairs():
+            found_words += 1
             codeword_str = codeword_as_str(codeword)
-            if len(codeword_str) > max_codeword_length:
-                max_codeword_length = len(codeword_str)
+            part1 = f"{add_whitespace(str(self.puzzle.codewords.index(codeword) + 1), 4)} {add_whitespace(codeword_str, self.max_codeword_length)}"
+            part2 = f"{add_whitespace(word.upper(), self.max_word_length)}"
+            print(f"{add_whitespace(str(found_words), self.max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
+        end_time = time.time()
+        self.print_solving_stats(end_time - start_time)
+
+    
+    def try_to_solve_puzzle_with_steps(self):
+        # max_codeword_length = 0
+        # max_word_length = 0
+        # for codeword in self.puzzle.codewords:
+        #     if len(codeword) > max_word_length:
+        #         max_word_length = len(codeword)
+        #     codeword_str = codeword_as_str(codeword)
+        #     if len(codeword_str) > max_codeword_length:
+        #         max_codeword_length = len(codeword_str)
         
         # only using best pairs
         # start_time = time.time()
@@ -1019,7 +1044,6 @@ class Krypto:
         original_substitution_dict = self.puzzle.substitution_dict.copy()
         print(self.current_language_dict["guessing_text"])
         start_time = time.time()
-        max_num_size = len(str(len(self.puzzle.codewords)))
         guesses = self.puzzle.try_to_solve_by_guessing()
         end_time = time.time()
 
@@ -1027,22 +1051,14 @@ class Krypto:
         percentage_of_numbers_deciphered = len(set(self.puzzle.substitution_dict.values())) / len(self.puzzle.substitution_dict)
         if percentage_of_numbers_deciphered >= self.SOLUTION_SUCCESS_THRESHOLD:
             for codeword_pair, word_pair in guesses:
-                self.print_pairs(codeword_pair, word_pair, max_codeword_length, max_word_length)
+                self.print_pairs(codeword_pair, word_pair, self.max_codeword_length, self.max_word_length)
             self.print_solving_stats(end_time - start_time)
             return
         
         print(self.current_language_dict["guessing_fail_text"])
         self.puzzle.substitution_dict = original_substitution_dict.copy()
         self.puzzle.set_matched_words()
-        found_words = 0
-        for codeword, word in self.puzzle.try_to_solve_using_unique_pairs():
-            found_words += 1
-            codeword_str = codeword_as_str(codeword)
-            part1 = f"{add_whitespace(str(self.puzzle.codewords.index(codeword) + 1), 4)} {add_whitespace(codeword_str, max_codeword_length)}"
-            part2 = f"{add_whitespace(word.upper(), max_word_length)}"
-            print(f"{add_whitespace(str(found_words), max_num_size)} {self.current_language_dict["best_match_text"]}{part1}  {part2}")
-        end_time = time.time()
-        self.print_solving_stats(end_time - start_time)
+        self.try_to_solve_puzzle_methodically(start_time)
 
         # guess the first pair and then go on
         # original_substitution_dict = self.puzzle.substitution_dict.copy()
@@ -1202,8 +1218,9 @@ class Krypto:
             (self.current_language_dict["find_unique_pairs"], self.find_unique_pairs),
             # (self.current_language_dict["solve"], self.try_to_solve_puzzle),
             (self.current_language_dict["solve_with_steps"], self.try_to_solve_puzzle_with_steps),
+            (self.current_language_dict["solve_methodically"], self.try_to_solve_puzzle_methodically),
             (self.current_language_dict["restart"], self.puzzle.clear_substitution_dict),
-            (self.current_language_dict["clear_screen"], clear_screen),
+            # (self.current_language_dict["clear_screen"], clear_screen),
             (self.current_language_dict["exit"], exit)
         ]
         # print("Choose an action:")
