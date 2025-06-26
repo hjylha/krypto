@@ -754,7 +754,7 @@ class Krypto:
             language_answer = input(f"{choose_prompt} ")
             if language_answer.lower() in self.config.keys():
                 # self.language = language_answer
-                self.set_language(language_answer)
+                self.set_language(language_answer.lower())
                 return
             if not language_answer and self.language:
                 return
