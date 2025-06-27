@@ -852,7 +852,7 @@ class Krypto:
             nums = [int(num.strip()) for num in num_input.split(",")]
             chars = [c.strip() for c in char.split(",")]
         for num, char in zip(nums, chars):
-            issue = self.puzzle.add_to_substitution_dict(num, char, issues)
+            issue = self.puzzle.add_to_substitution_dict(num, char.lower(), issues)
             if not issues:
                 continue
             if issue == 1:
