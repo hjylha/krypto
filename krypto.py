@@ -494,14 +494,20 @@ class CodewordPuzzle:
     def find_all_unique_pairs(self):
         unique_pairs = []
         codewords_to_match = sorted(self.matched_words.keys(), key=lambda c: len(self.matched_words[c]))
+        # print("codewords sorted")
+        # checked_things = 0
+        # good_things = 0
         for i, codeword1 in enumerate(codewords_to_match):
             is_codeword1_solved = self.is_codeword_solved(codeword1)
             for codeword2 in codewords_to_match[i + 1:]:
+                # checked_things += 1
                 is_codeword2_solved = self.is_codeword_solved(codeword2)
                 if is_codeword1_solved and is_codeword2_solved:
                     continue
                 matched_pairs = self.match_two_codewords(codeword1, codeword2, 1)
                 if matched_pairs:
+                    # good_things += 1
+                    # print(f"{checked_things} pair is good number {good_things}")
                     unique_pairs.append(((codeword1, codeword2), matched_pairs[0]))
         return unique_pairs
 
