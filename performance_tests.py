@@ -1,5 +1,6 @@
 
 import sys
+from pathlib import Path
 from time import perf_counter_ns
 
 import krypto
@@ -30,6 +31,10 @@ class PerformanceTest:
         self.alphabet = self.config[self.language][self.ALPHABET_KEY]
         self.wordlist_path = self.config[self.language][self.WORDLIST_PATH_KEY]
         self.codeword_path = codewords_path
+
+        self.wordlist = None
+        self.codewords = None
+        self.comments = None
 
 
     def time_get_wordlist(self):
@@ -75,21 +80,41 @@ class PerformanceTest:
         description = f"find_all_unique_pairs ({extra_description})"
         return show_time(description, start_time, end_time)
 
+    def time_CodewordPuzzle_init(self):
+        if self.codewords is None or self.comments is None:
+            self.comments, self.codewords = krypto.get_codewords(self.codeword_path)
+        if self.wordlist is None:
+            self.wordlist = krypto.get_wordlist(self.wordlist_path)
+        start_time = perf_counter_ns()
+
+        self.codewordpuzzle = krypto.CodewordPuzzle(self.codewords, self.wordlist, self.alphabet, self.comments)
+
+        end_time = perf_counter_ns()
+        description = f"CodewordPuzzle init "
+        return show_time(description, start_time, end_time)
+
+
     def run_all_performance_tests(self):
 
         print(f"\n Language: {self.language} \n Wordlist path: {self.wordlist_path} \n Codewords path: {self.codeword_path}")
 
-        t1 = self.time_get_wordlist()
+        times = []
 
-        t2 = self.time_get_codewords()
+        times.append(self.time_get_wordlist())
 
-        t3 = self.time_set_matched_words(self.codewords, self.wordlist)
+        times.append(self.time_get_codewords())
 
-        self.codewordpuzzle = krypto.CodewordPuzzle(self.codewords, self.wordlist, self.alphabet, self.comments)
+        # times.append(self.time_set_matched_words(self.codewords, self.wordlist))
 
-        t4 = self.time_find_all_unique_pairs(self.codewordpuzzle)
+        times.append(self.time_CodewordPuzzle_init())
 
-        total_time = t1 + t2 + t3 + t4
+        # self.codewordpuzzle = krypto.CodewordPuzzle(self.codewords, self.wordlist, self.alphabet, self.comments)
+
+        times.append(self.time_find_all_unique_pairs(self.codewordpuzzle))
+
+        total_time = 0
+        for t in times:
+            total_time += t
         print(f"{round(total_time / 1_000_000_000, 3)} seconds overall\n")
 
 
@@ -103,24 +128,25 @@ if __name__ == "__main__":
 
     if do_fi:
         language_tag = "fi"
-        codeword_path = "k24-51-52.csv"
-        pt_fi = PerformanceTest(language_tag, codeword_path)
-        pt_fi.run_all_performance_tests()
-
-        codeword_path = "k25-16-17.csv"
-        pt_fi = PerformanceTest(language_tag, codeword_path)
-        pt_fi.run_all_performance_tests()
+        codeword_paths = [
+            "k24-51-52.csv",
+            "k25-16-17.csv",
+            "k25-25-26.csv",
+            "k152.csv"
+        ]
+        for codeword_path in codeword_paths:
+            if Path(codeword_path).exists():
+                pt_fi = PerformanceTest(language_tag, codeword_path)
+                pt_fi.run_all_performance_tests()
 
     if do_en:
         language_tag = "en"
-        codeword_path = "cw25-05-12.csv"
-        pt_en = PerformanceTest(language_tag, codeword_path)
-        pt_en.run_all_performance_tests()
-
-        codeword_path = "cw25-05-22.csv"
-        pt_en = PerformanceTest(language_tag, codeword_path)
-        pt_en.run_all_performance_tests()
-
-        codeword_path = "cw25-05-23.csv"
-        pt_en = PerformanceTest(language_tag, codeword_path)
-        pt_en.run_all_performance_tests()
+        codeword_paths = [
+            "cw25-05-12.csv",
+            "cw25-05-22.csv",
+            "cw25-05-23.csv"
+        ]
+        for codeword_path in codeword_paths:
+            if Path(codeword_path).exists():
+                pt_fi = PerformanceTest(language_tag, codeword_path)
+                pt_fi.run_all_performance_tests()
