@@ -317,8 +317,8 @@ class CodewordPuzzle:
         substitution_tuple = tuple([(key, value) for key, value in self.substitution_dict.items() if value])
         if substitution_tuple:
             return substitution_tuple
-    
-    def set_matched_words(self):
+
+    def set_matched_words_from_start(self):
         substitution_tuple = self.get_substitution_tuple()
         for codeword, words in self.matched_words_all.items():
             # matching_indices = {i: self.substitution_dict[num] for i, num in enumerate(codeword) if self.substitution_dict[num]}
@@ -328,6 +328,17 @@ class CodewordPuzzle:
                     new_matched_words.append(word)
                 # if does_word_match_to_fixed_index_values(word, matching_indices):
                 #     new_matched_words.append(word)
+            self.matched_words[codeword] = new_matched_words
+    
+    def set_matched_words(self):
+        substitution_tuple = self.get_substitution_tuple()
+        for codeword, words in self.matched_words.items():
+            if not words:
+                continue
+            new_matched_words = []
+            for word in words:
+                if does_word_match_to_substitution_tuple(word, codeword, substitution_tuple):
+                    new_matched_words.append(word)
             self.matched_words[codeword] = new_matched_words
 
     def is_codeword_solved(self, codeword):
@@ -367,7 +378,7 @@ class CodewordPuzzle:
             return True
         if char == "":
             self.substitution_dict[num] = char
-            self.set_matched_words()
+            self.set_matched_words_from_start()
             return False
         if char.lower() not in [c.lower() for c in self.alphabet]:
             if issues:
@@ -379,6 +390,7 @@ class CodewordPuzzle:
                 previous_num = self.find_char_from_substitution_dict(char)
                 self.substitution_dict[previous_num] = ""
                 self.substitution_dict[num] = char
+                self.set_matched_words_from_start()
             if issues:
                 return issues["double letter"]
             return True
@@ -909,7 +921,7 @@ class Krypto:
             # print(f"{word} is NOT in wordlist")
         for num, char in zip(codeword, [c for c in word]):
             self.puzzle.add_to_substitution_dict(num, char, override=True)
-        self.puzzle.set_matched_words()
+        self.puzzle.set_matched_words_from_start()
 
     def print_pairs(self, codeword_pair, word_pair, max_codeword_length=None, max_word_length=None, solved_char="*"):
         codeword1, codeword2 = codeword_pair
@@ -1144,7 +1156,7 @@ class Krypto:
     def print_codeword_progress(self, codewords=None, not_found_symbol="_"):
         if codewords is None:
             codewords = self.puzzle.codewords
-        self.puzzle.set_matched_words()
+        self.puzzle.set_matched_words_from_start()
         num_of_chars1 = 0
         num_of_chars2 = 0
         for codeword in codewords:
