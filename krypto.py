@@ -806,7 +806,7 @@ class Krypto:
         while True:
             found_csv_files_text = self.current_language_dict["found_csv_files_text"]
             print(found_csv_files_text)
-            for csv_path in get_csv_files_in_folder(self.config[self.language][self.CODEWORD_FOLDER_PATH_KEY]):
+            for csv_path in sorted(get_csv_files_in_folder(self.config[self.language][self.CODEWORD_FOLDER_PATH_KEY])):
                 print(f"\t{csv_path.name}")
             prompt_text = self.current_language_dict["codeword_path_prompt"]
             # print(prompt_text)
