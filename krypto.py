@@ -1275,7 +1275,7 @@ class Krypto:
             choice_num = None
         print()
         if choice_num == 0:
-            ans = yes_or_no_question(self.current_language_dict["exit_confirmation"])
+            ans = self.yes_no_question(self.current_language_dict["exit_confirmation"])
             # ans = yes_or_no_question("Are you sure you want to quit?")
             if ans:
                 exit()
