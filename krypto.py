@@ -3,6 +3,7 @@ import os
 import sys
 import time
 from pathlib import Path
+import shutil
 
 
 def read_config(config_path):
@@ -26,7 +27,15 @@ def read_config(config_path):
                 if "folder_path" in key and not value:
                     value = Path(__file__).parent
                 elif "path" in key and value:
-                    value = Path(value)
+                    possible_path = Path(value)
+                    if possible_path.exists():
+                        readings[language_tag][key] = possible_path
+                        continue
+                    possible_path = Path(__file__).parent / value
+                    if possible_path.exists():
+                        readings[language_tag][key] = possible_path
+                        continue
+                    raise Exception(f"No file found matching path {value}")
                 elif not value:
                     value = None
                 readings[language_tag][key] = value
@@ -717,8 +726,9 @@ def yes_or_no_question(question_text, yes_no_tuple=("y", "n"), help_text="Please
 
 
 class Krypto:
-    DEFAULT_LANGUAGE_FILE_PATH = "language_file"
-    DEFAULT_CONFIG_PATH = "krypto.conf"
+    DEFAULT_LANGUAGE_FILE_PATH = Path(__file__).parent / "language_file"
+    DEFAULT_CONFIG_PATH = Path(__file__).parent / "default_config"
+    EXPECTED_CONFIG_PATH = Path(__file__).parent / "krypto.cfg"
     NAME_KEY = "name"
     ALPHABET_KEY = "alphabet"
     WORDLIST_PATH_KEY = "wordlist_path"
@@ -726,8 +736,10 @@ class Krypto:
 
     SOLUTION_SUCCESS_THRESHOLD = 0.75
 
-    def __init__(self, language_file_path=DEFAULT_LANGUAGE_FILE_PATH, config_path=DEFAULT_CONFIG_PATH, language=None, wordlist_path=None, codeword_path=None, puzzle=None):
+    def __init__(self, language_file_path=DEFAULT_LANGUAGE_FILE_PATH, config_path=EXPECTED_CONFIG_PATH, language=None, wordlist_path=None, codeword_path=None, puzzle=None):
         self.language_dict = get_language_dict(language_file_path)
+        if not config_path.exists():
+            shutil.copy(self.DEFAULT_CONFIG_PATH, config_path)
         default_language, config = read_config(config_path)
         self.config = config
         self.default_language = default_language
