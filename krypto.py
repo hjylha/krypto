@@ -412,17 +412,27 @@ class CodewordPuzzle:
             if value.lower() == char.lower():
                 return num
     
-    def find_codeword(self, codeword_str):
+    def find_codeword(self, codeword_str, accept_unknown_codewords=False):
         try:
             codeword_index = int(codeword_str) - 1
             return self.codewords[codeword_index]
         except ValueError:
-            codeword = tuple([int(item.strip()) for item in codeword_str.split(",")])
-            if codeword in self.codewords:
-                return codeword
-            codeword = tuple([int(item.strip()) for item in codeword_str.split(" ")])
-            if codeword in self.codewords:
-                return codeword
+            separators = [",", " ", ", "]
+            for sep in separators:
+                try:
+                    codeword = tuple([int(item.strip()) for item in codeword_str.split(sep)])
+                    if codeword in self.codewords:
+                        return codeword
+                    if accept_unknown_codewords:
+                        return codeword
+                except ValueError:
+                    pass
+            # codeword = tuple([int(item.strip()) for item in codeword_str.split(",")])
+            # if codeword in self.codewords:
+            #     return codeword
+            # codeword = tuple([int(item.strip()) for item in codeword_str.split(" ")])
+            # if codeword in self.codewords:
+            #     return codeword
     
     def find_codeword_with_least_matches(self):
         the_codeword = None
